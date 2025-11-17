@@ -29,7 +29,7 @@ import {
 import Footer from "../Footer";
 
 interface ServiceDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
   onSelectService: (service: string) => void;
 }
 

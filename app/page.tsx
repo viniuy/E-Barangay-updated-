@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { MainDashboard } from '@/components/user/UserMainDashboard'
 import { ServiceDirectory } from '@/components/user/UserServiceDirectory'
 import { ServiceForm } from '@/components/user/UserServiceForm'
+import { UserRequests } from '@/components/user/UserRequests'
 
 // Dynamically import FacilitiesDirectory to avoid SSR issues with Leaflet
 const FacilitiesDirectory = dynamic(
@@ -12,7 +13,7 @@ const FacilitiesDirectory = dynamic(
   { ssr: false }
 )
 
-type View = 'dashboard' | 'services' | 'facilities' | 'application'
+type View = 'dashboard' | 'services' | 'facilities' | 'application' | 'requests'
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -54,6 +55,12 @@ export default function Home() {
         return (
           <ServiceForm
             service={selectedService}
+            onNavigate={setCurrentView}
+          />
+        )
+      case 'requests':
+        return (
+          <UserRequests
             onNavigate={setCurrentView}
           />
         )

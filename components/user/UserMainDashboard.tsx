@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/accordion";
 
 interface MainDashboardProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
   onSelectService?: (service: string) => void;
 }
 

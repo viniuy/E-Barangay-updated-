@@ -133,7 +133,23 @@ Make sure to add your environment variables in the Vercel dashboard:
 
 ## Supabase Setup
 
-### Security Best Practices
+### 1. Database Setup
+
+1. Go to your Supabase project SQL Editor
+2. Run the SQL schema provided earlier to create all tables
+3. Run `supabase-setup.sql` to set up:
+   - Database triggers to sync auth users with your users table
+   - Row Level Security (RLS) policies
+   - Proper access controls
+
+### 2. Authentication Setup
+
+1. Go to Authentication > Settings in your Supabase dashboard
+2. Configure email settings (optional but recommended)
+3. Enable email confirmation if desired
+4. Set up your email templates
+
+### 3. Security Best Practices
 
 - **Row Level Security (RLS)**: Always enable RLS on your Supabase tables
 - **Client vs Server**: 
@@ -141,7 +157,7 @@ Make sure to add your environment variables in the Vercel dashboard:
   - Use `lib/supabase/server.ts` for server components and API routes
 - **Never expose service role key**: The service role key should only be used in secure server-side contexts
 
-### Using Supabase in Your Components
+### 4. Using Supabase in Your Components
 
 **Client Components:**
 ```typescript
@@ -159,6 +175,21 @@ import { createClient } from '@/lib/supabase/server'
 const supabase = await createClient()
 // Use supabase client here
 ```
+
+### 5. Authentication
+
+The app now includes:
+- **Login/Signup**: Click "Log In" or "Sign Up" in the header
+- **User Dashboard**: View all your requests when logged in
+- **Protected Routes**: Service applications require authentication
+- **Automatic User Sync**: New users are automatically added to the users table via database trigger
+
+### 6. Database Access Check
+
+The app automatically checks if database access is needed:
+- **Public Data**: Categories, items (services/facilities) - accessible to everyone
+- **User Data**: Requests, user profile - requires authentication
+- **Admin Data**: Request management - requires admin role (to be implemented)
 
 ## License
 

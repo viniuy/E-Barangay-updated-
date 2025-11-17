@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 
 interface ServiceFormProps {
   service: string | null; 
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' | 'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' | 'application' | 'requests') => void;
 }
 
 export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
@@ -53,8 +53,12 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!item || !userId) {
-      alert("Service not found or user not logged in");
+    if (!item) {
+      alert("Service not found");
+      return;
+    }
+    if (!userId) {
+      alert("Please log in to submit a request");
       return;
     }
 

@@ -27,7 +27,7 @@ import {
 
 interface ServiceApplicationProps {
   service: string | null;
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
 }
 
 const serviceDetails = {

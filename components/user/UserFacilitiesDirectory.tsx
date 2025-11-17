@@ -13,7 +13,7 @@ import Footer from "../Footer";
 import { useItems, useCategories } from '@/lib/hooks/useItems';
 
 interface FacilityDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
   onSelectFacility: (facility: string) => void;
 }
 
