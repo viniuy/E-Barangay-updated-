@@ -1,13 +1,13 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import bcrypt from 'bcryptjs'
+import { createSession, getSession, deleteSession } from '@/lib/auth/session'
+import { randomUUID } from 'crypto'
 
 export async function signUp(email: string, password: string, username: string) {
-  const supabase = await createClient()
-
   // Check if user already exists in database
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -22,119 +22,96 @@ export async function signUp(email: string, password: string, username: string) 
     return { error: 'User with this email or username already exists' }
   }
 
-  // Sign up the user with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        username: username,
-      },
-    },
-  })
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10)
 
-  if (authError) {
-    return { error: authError.message }
-  }
-
-  if (!authData.user) {
-    return { error: 'Failed to create user' }
-  }
-
-  // Save user to database using Prisma with default role 'resident'
+  // Create user in database
   try {
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
-        id: authData.user.id, // Use the same ID from Supabase Auth
-        email: authData.user.email!,
-        username: username,
-        password: 'hashed_password_placeholder', // Password is handled by Supabase Auth
+        id: randomUUID(),
+        email,
+        username,
+        password: hashedPassword,
         userRole: 'resident', // Default role is resident
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     })
+
+    // Create session
+    await createSession(user.id)
+
+    revalidatePath('/')
+    return { 
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      }
+    }
   } catch (dbError: any) {
-    // If user creation fails (e.g., trigger already created it), that's okay
-    // The database trigger might have already created the user
-    console.log('User might already exist in database (trigger may have created it):', dbError.message)
-    
-    // Verify the user exists and update role if needed
-    const userExists = await prisma.user.findUnique({
-      where: { id: authData.user.id },
-    })
-
-    if (!userExists) {
-      return { error: 'Failed to save user to database' }
-    }
-
-    // Update role if it wasn't set (for existing users)
-    if (!userExists.userRole) {
-      await prisma.user.update({
-        where: { id: authData.user.id },
-        data: { userRole: 'resident' },
-      })
-    }
+    console.error('Error creating user:', dbError)
+    return { error: 'Failed to create user. Please try again.' }
   }
-
-  revalidatePath('/')
-  return { user: authData.user }
 }
 
 export async function signIn(email: string, password: string) {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+  // Find user by email
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      password: true,
+      userRole: true,
+    },
   })
 
-  if (error) {
-    return { error: error.message }
+  if (!user) {
+    return { error: 'Invalid email or password' }
   }
 
-  if (!data.user) {
-    return { error: 'Failed to sign in' }
+  // Verify password
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    return { error: 'Invalid email or password' }
   }
 
-  // Get user role from database
-  const dbUser = await prisma.user.findUnique({
-    where: { id: data.user.id },
-    select: { userRole: true },
-  })
+  // Create session
+  await createSession(user.id)
 
   revalidatePath('/')
   return { 
-    user: data.user,
-    role: dbUser?.userRole || 'resident' // Default to resident if role not found
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    },
+    role: user.userRole || 'resident'
   }
 }
 
 export async function signOut() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  await deleteSession()
   revalidatePath('/')
   redirect('/')
 }
 
 export async function getCurrentUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await getSession()
   
-  if (!user) {
+  if (!session) {
     return null
   }
 
-  // Get user with role from database
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { userRole: true, username: true, email: true },
-  })
-
   return {
-    ...user,
-    role: dbUser?.userRole || 'resident',
-    username: dbUser?.username,
+    id: session.user.id,
+    email: session.user.email,
+    username: session.user.username,
+    role: session.user.role || 'resident',
   }
 }
 

@@ -1,34 +1,39 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { User } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+import axiosInstance from '@/lib/axios'
+
+interface User {
+  id: string
+  email: string
+  username: string
+  role: string
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
-  const router = useRouter()
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      setLoading(false)
-    })
+    // Fetch current user from API
+    const fetchUser = async () => {
+      try {
+        const response = await axiosInstance.get('/api/auth/me')
+        setUser(response.data.user)
+      } catch (error) {
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-      router.refresh()
-    })
+    fetchUser()
 
-    return () => subscription.unsubscribe()
-  }, [router, supabase.auth])
+    // Re-fetch user periodically to check session validity
+    const interval = setInterval(fetchUser, 60000) // Check every minute
+
+    return () => clearInterval(interval)
+  }, [])
 
   return { user, loading }
 }

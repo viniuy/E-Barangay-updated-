@@ -1,42 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSession } from '@/lib/auth/session'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  // Verify session exists (optional - can be used for protected routes)
+  // For now, we'll just pass through and let individual pages handle auth
+  const response = NextResponse.next()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          request.cookies.set(name, value)
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          supabaseResponse.cookies.set(name, value, options)
-        },
-        remove(name: string, options: any) {
-          request.cookies.set(name, '')
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          supabaseResponse.cookies.set(name, '', { ...options, maxAge: 0 })
-        },
-      },
-    }
-  )
-
-  // Refresh session if expired - required for Server Components
-  // https://supabase.com/docs/guides/auth/server-side/nextjs
-  await supabase.auth.getUser()
-
-  return supabaseResponse
+  return response
 }
 
 export const config = {
