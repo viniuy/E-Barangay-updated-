@@ -1,9 +1,14 @@
+'use client'
+
 import { Header } from './AdminHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Label } from "../ui/label"
 import Footer from "../Footer";
+import { useCategories, useItems } from '@/lib/hooks/useItems';
+import { getStatistics } from '@/lib/api/statistics';
+import { useEffect, useState } from 'react';
 
 import { 
   Plane, 
@@ -38,9 +43,68 @@ import {
 } from "@/components/ui/accordion";
 
 interface MainDashboardProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
   onSelectService?: (service: string) => void;
 }
+
+export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProps) {
+  const { categories, loading: categoriesLoading } = useCategories()
+  const { items: services } = useItems('service')
+  const { items: facilities } = useItems('facility')
+  const [stats, setStats] = useState<any>(null)
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const statistics = await getStatistics()
+        setStats(statistics)
+      } catch (error) {
+        console.error('Failed to load statistics:', error)
+      }
+    }
+    loadStats()
+  }, [])
+
+  // Filter categories for services and facilities
+  const serviceCategories = categories
+    .filter(cat => services.some(s => s.category_id === cat.id))
+    .map((cat, index) => {
+      const count = services.filter(s => s.category_id === cat.id).length
+      const nameLower = cat.name?.toLowerCase() || ''
+      const iconKey = Object.keys(categoryIconMap).find(key => nameLower.includes(key)) || 'default'
+      const IconComponent = categoryIconMap[iconKey]
+      const color = colorClasses[index % colorClasses.length]
+      
+      return {
+        id: cat.id,
+        title: cat.name || 'Category',
+        description: cat.description || '',
+        icon: IconComponent,
+        count,
+        color,
+        popular: count >= 3
+      }
+    })
+
+  const facilityReservation = categories
+    .filter(cat => facilities.some(f => f.category_id === cat.id))
+    .map((cat, index) => {
+      const count = facilities.filter(f => f.category_id === cat.id).length
+      const nameLower = cat.name?.toLowerCase() || ''
+      const iconKey = Object.keys(facilityIconMap).find(key => nameLower.includes(key)) || 'default'
+      const IconComponent = facilityIconMap[iconKey]
+      const color = colorClasses[index % colorClasses.length]
+      
+      return {
+        id: cat.id,
+        title: cat.name || 'Facility',
+        description: cat.description || '',
+        icon: IconComponent,
+        count,
+        color,
+        popular: count >= 2
+      }
+    })
 
 interface FaqItem {
   id: string;
@@ -53,109 +117,36 @@ interface Faq1Props {
   items?: FaqItem[];
 }
 
-const serviceCategories = [
-  {
-    id: 'education',
-    title: 'Education Services',
-    description: 'Certificates for school enrollment and scholarship applications',
-    icon: GraduationCap,
-    count: 2,
-    color: 'bg-purple-100 text-purple-600',
-    popular: true
-  },
-  {
-    id: 'travel',
-    title: 'Travel & Immigration',
-    description: 'Residency or identity certificates for passport and travel needs',
-    icon: Plane,
-    count: 2,
-    color: 'bg-green-100 text-green-600',
-    popular: false
-  },
-  {
-    id: 'health',
-    title: 'Health Services',
-    description: 'Health certificates, referrals, and medical assistance endorsements',
-    icon: Heart,
-    count: 3,
-    color: 'bg-red-100 text-red-600',
-    popular: false
-  },
-  {
-    id: 'business',
-    title: 'Business Services',
-    description: 'Business clearances and permit endorsements',
-    icon: Building,
-    count: 2,
-    color: 'bg-orange-100 text-orange-600',
-    popular: false
-  },
-  {
-    id: 'transport',
-    title: 'Transport Services',
-    description: 'Clearances for tricycle permits and local transport needs',
-    icon: Car,
-    count: 2,
-    color: 'bg-indigo-100 text-indigo-600',
-    popular: false
-  },
-  {
-    id: 'social',
-    title: 'Social Services',
-    description: 'Certificates for indigency, senior citizens, and PWDs',
-    icon: Users,
-    count: 4,
-    color: 'bg-pink-100 text-pink-600',
-    popular: false
-  },
-  {
-    id: 'security',
-    title: 'Security Services',
-    description: 'Blotters and protection orders',
-    icon: Shield,
-    count: 4,
-    color: 'bg-gray-100 text-gray-600',
-    popular: false
-  }
-];
+// Icon mapping for categories
+const categoryIconMap: Record<string, any> = {
+  'education': GraduationCap,
+  'travel': Plane,
+  'health': Heart,
+  'business': Building,
+  'transport': Car,
+  'social': Users,
+  'security': Shield,
+  'default': FileCheck2,
+}
 
-const facilityReservation = [
-  {
-    id: 'basketball',
-    title: 'Basketball Court',
-    description: 'A fully equipped court for basketball games and sports activities.',
-    icon: ShoppingBasket,
-    count: 4,
-    color: 'bg-orange-100 text-orange-600',
-    popular: true
-  },
-  {
-    id: 'coveredCourt',
-    title: 'Covered Court',
-    description: 'Outdoor sports area protected from weather, perfect for games and events.',
-    icon: Volleyball,
-    count: 3,
-    color: 'bg-blue-100 text-blue-800',
-    popular: true
-  },
-  {
-    id: 'halls',
-    title: 'Multipurpose Hall',
-    description: 'A versatile space for events, meetings, and community activities.',
-    icon: Landmark,
-    count: 2,
-    color: 'bg-pink-100 text-pink-600',
-    popular: false
-  },
-  {
-    id: 'function',
-    title: 'Function Room',
-    description: 'Private rooms ideal for seminars, workshops, and small gatherings.',
-    icon: Warehouse,
-    count: 1,
-    color: 'bg-purple-100 text-purple-600',
-    popular: false
-  }
+const facilityIconMap: Record<string, any> = {
+  'basketball': ShoppingBasket,
+  'court': Volleyball,
+  'hall': Landmark,
+  'function': Warehouse,
+  'default': Landmark,
+}
+
+// Color mapping
+const colorClasses = [
+  'bg-purple-100 text-purple-600',
+  'bg-green-100 text-green-600',
+  'bg-red-100 text-red-600',
+  'bg-orange-100 text-orange-600',
+  'bg-indigo-100 text-indigo-600',
+  'bg-pink-100 text-pink-600',
+  'bg-gray-100 text-gray-600',
+  'bg-blue-100 text-blue-800',
 ]
 
 const recentUpdates = [
@@ -230,7 +221,6 @@ const Faq1 = ({
   );
 };
 
-export function MainDashboard({ onNavigate }: MainDashboardProps) {
   return (
     <div>
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-200 p-6 rounded-lg m-5">
@@ -245,7 +235,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
               Welcome, Admin!
             </h1>
             <p className="mt-4 text-lg text-gray-600">
-              Manage your barangay’s services and facilities with ease. <br />
+              Manage your barangay's services and facilities with ease. <br />
               Add, remove, or review user requests anytime.
             </p>
 
@@ -391,11 +381,15 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Services</span>
-                    <span className="font-semibold">15</span>
+                    <span className="font-semibold">{stats?.totalServices || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Avg. Processing</span>
-                    <span className="font-semibold">2.5 days</span>
+                    <span className="text-sm">Total Facilities</span>
+                    <span className="font-semibold">{stats?.totalFacilities || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total Requests</span>
+                    <span className="font-semibold">{stats?.totalRequests || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -405,7 +399,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                 <CardHeader>
                   <CardTitle className="text-3xl font-semibold text-3xl">Frequently Asked Questions</CardTitle>
                   <CardDescription>
-                    Your guide to getting started with E-Barangay’s digital services.
+                    Your guide to getting started with E-Barangay's digital services.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

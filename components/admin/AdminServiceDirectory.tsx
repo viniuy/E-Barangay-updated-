@@ -1,10 +1,12 @@
-import { useState } from 'react';
+'use client'
+
+import { useState, useMemo } from 'react';
 import { Header } from './AdminHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-
+import { useItems, useCategories } from '@/lib/hooks/useItems';
 import { 
   Search, 
   Clock,
@@ -36,207 +38,76 @@ import {
 import Footer from "../Footer";
 
 interface ServiceDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
   onSelectService: (service: string) => void;
 }
 
-const allServices = [
-  {
-    id: 1,
-    title: 'Barangay Clearance',
-    description: 'General clearance used for employment, school, IDs, and business applications.',
-    category: 'permits',
-    icon: FileCheck,
-    processingTime: '1-2 days',
-    fee: 'PHP 50',
-    popularity: 5,
-    availability: 'Business Hours',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula'],
-    featured: true
-  },
-  {
-    id: 2,
-    title: 'Barangay Business Permit / Endorsement',
-    description: 'Endorsement required before City Hall issues a business permit or for renewal.',
-    category: 'business',
-    icon: Building,
-    processingTime: '2-3 days',
-    fee: 'PHP 100',
-    popularity: 4,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Business documents'],
-    featured: false
-  },
-  {
-    id: 3,
-    title: 'Barangay Building/Construction Endorsement',
-    description: 'Endorsement certificate for building or construction permits.',
-    category: 'permits',
-    icon: Hammer,
-    processingTime: '2-3 days',
-    fee: 'PHP 100',
-    popularity: 3,
-    availability: 'Business hours',
-    requirements: ['Building plan', 'Lot documents', 'Valid ID'],
-    featured: false
-  },
-  {
-    id: 4,
-    title: 'Certificate of Residency',
-    description: 'Proof of residency used for passports, travel, school enrollment, or other government services.',
-    category: 'travel',
-    icon: Home,
-    processingTime: '1 day',
-    fee: 'PHP 50',
-    popularity: 5,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Proof of Residence'],
-    featured: true
-  },
-  {
-    id: 5,
-    title: 'Certificate of Indigency',
-    description: 'Proof of indigency used for scholarships, medical or hospital assistance, legal aid, or social welfare programs.',
-    category: 'social',
-    icon: Users,
-    processingTime: '1 day',
-    fee: 'PHP 50',
-    popularity: 5,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Interview with Baranggay Staff'],
-    featured: true
-  },
-  {
-    id: 6,
-    title: 'Barangay Health Certificate',
-    description: 'Issued for food handlers, certain local jobs, or health-related requirements.',
-    category: 'health',
-    icon: HeartPulseIcon,
-    processingTime: '1-2 days',
-    fee: 'PHP 100',
-    popularity: 4,
-    availability: 'Business Hours',
-    requirements: ['Medical check-up', 'Valid ID'],
-    featured: false
-  },
-  {
-    id: 7,
-    title: 'Tricycle Operator’s Permit (TOP) Clearance',
-    description: 'Barangay clearance needed before applying for a tricycle franchise.',
-    category: 'transport',
-    icon: Car,
-    processingTime: '2 days',
-    fee: 'PHP 150',
-    popularity: 2,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Franchise documents'],
-    featured: true
-  },
-  {
-    id: 8,
-    title: 'Referral Slip to Health Center / Hospital',
-    description: 'Barangay referral to access city health services or hospitals.',
-    category: 'health',
-    icon: Hospital,
-    processingTime: 'Same day',
-    fee: 'PHP 50',
-    popularity: 2,
-    availability: 'Business hours',
-    requirements: ['Barangay assessment', 'Valid ID'],
-    featured: false
-  },
-  {
-    id: 9,
-    title: 'Senior Citizen / PWD Certification Endorsement',
-    description: 'Endorsement used to apply for senior or PWD IDs and government benefits.',
-    category: 'social',
-    icon: Accessibility,
-    processingTime: '1-2 days',
-    fee: 'PHP 50',
-    popularity: 4,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Medical proof (if PWD)'],
-    featured: true
-  },
-  {
-    id: 10,
-    title: 'Solo Parent Certification Endorsement',
-    description: 'Endorsement required for Solo Parent ID or benefits application.',
-    category: 'social',
-    icon: User,
-    processingTime: '2 days',
-    fee: 'PHP 50',
-    popularity: 3,
-    availability: 'Business hours',
-    requirements: ['Valid ID', 'Proof of solo parent status'],
-    featured: false
-  },
-  {
-    id: 11,
-    title: 'Barangay Blotter / Certification',
-    description: 'Proof of a filed complaint or incident report at the barangay.',
-    category: 'security',
-    icon: Shield,
-    processingTime: 'Same day',
-    fee: 'PHP 50',
-    popularity: 5,
-    availability: '24/7',
-    requirements: ['Incident details', 'Valid ID'],
-    featured: false
-  },
-  {
-    id: 12,
-    title: 'Barangay Protection Order (BPO)',
-    description: 'Protection order issued in cases of violence against women and children.',
-    category: 'security',
-    icon: Lock,
-    processingTime: 'Same day',
-    fee: 'PHP 0',
-    popularity: 5,
-    availability: '24/7',
-    requirements: ['Complaint details', 'Police report (if available)'],
-    featured: false
-  }
-];
-
-const categories = [
-  { id: 'all', label: 'All Services', count: allServices.length },
-  { id: 'permits', label: 'Permits & Licenses', count: 2 },
-  { id: 'travel', label: 'Travel & Immigration', count: 1 },
-  { id: 'business', label: 'Business Services', count: 1 },
-  { id: 'transport', label: 'Transport', count: 1 },
-  { id: 'education', label: 'Education', count: 0 },
-  { id: 'health', label: 'Health Services', count: 2 },
-  { id: 'social', label: 'Social Services', count: 3 },
-  { id: 'security', label: 'Security Services', count: 2 }
-];
+const iconMap: Record<string, any> = {
+  'default': FileCheck,
+  'clearance': FileCheck,
+  'permit': Building,
+  'construction': Hammer,
+  'residency': Home,
+  'indigency': Users,
+  'health': HeartPulseIcon,
+  'tricycle': Car,
+  'referral': Hospital,
+  'senior': Accessibility,
+  'solo': User,
+  'blotter': Shield,
+  'protection': Lock,
+}
 
 export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirectoryProps) {
+  const { items: services, loading } = useItems('service')
+  const { categories } = useCategories()
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('popularity');
+  const [sortBy, setSortBy] = useState('alphabetical');
 
-  const filteredServices = allServices
-    .filter(service => {
-      const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           service.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+  const categoryOptions = useMemo(() => {
+    const allOption = { id: 'all', label: 'All Services', count: services.length }
+    const categoryOptions = categories.map(cat => ({
+      id: cat.id,
+      label: cat.name,
+      count: services.filter(s => s.category_id === cat.id).length
+    }))
+    return [allOption, ...categoryOptions]
+  }, [categories, services])
+
+  const filteredServices = useMemo(() => {
+    let filtered = services.filter(service => {
+      const matchesSearch = service.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           false
+      const matchesCategory = selectedCategory === 'all' || service.category_id === selectedCategory
+      return matchesSearch && matchesCategory
     })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'popularity':
-          return b.popularity - a.popularity;
-        case 'alphabetical':
-          return a.title.localeCompare(b.title);
-        case 'processing':
-          return a.processingTime.localeCompare(b.processingTime);
-        default:
-          return 0;
-      }
-    });
 
-  const featuredServices = allServices.filter(service => service.featured);
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'alphabetical':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'category':
+          return (a.category?.name || '').localeCompare(b.category?.name || '')
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }, [services, searchTerm, selectedCategory, sortBy])
+
+  const featuredServices = filteredServices.slice(0, 6) // Show first 6 as featured
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading services...</div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -255,7 +126,11 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
               <Carousel className="w-full max-w-4xl">
                 <CarouselContent className="px-2">
                   {featuredServices.map((service) => {
-                    const IconComponent = service.icon;
+                    const serviceNameLower = service.name?.toLowerCase() || ''
+                    const iconKey = Object.keys(iconMap).find(key => 
+                      serviceNameLower.includes(key)
+                    ) || 'default'
+                    const IconComponent = iconMap[iconKey]
                     return (
                       <CarouselItem 
                         key={service.id} 
@@ -263,7 +138,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                       >
                         <Card 
                           className="border-2 border-blue-300 rounded-lg hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col"
-                          onClick={() => onSelectService(service.title)}
+                          onClick={() => onSelectService(service.id)}
                         >
                           <CardHeader className="pb-3 text-center">
                             <div className="flex justify-center">
@@ -271,7 +146,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                                 <IconComponent className="h-7 w-7 bg-white text-blue-800 rounded-lg" />
                               </div>
                             </div>
-                            <CardTitle className="text-lg mt-2">{service.title}</CardTitle>
+                            <CardTitle className="text-lg mt-2">{service.name}</CardTitle>
                             <CardDescription className="text-sm">{service.description}</CardDescription>
                           </CardHeader>
                         
@@ -280,12 +155,12 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                               {/* Processing Time Box */}
                               <div className="flex-1 flex items-center justify-center border-1 border-gray-400 rounded-md px-3 py-2 text-sm text-black">
                                 <Clock className="h-4 w-4 mr-1" />
-                                {service.processingTime}
+                                {service.availability || 'N/A'}
                               </div>
 
                               {/* Fee Box */}
                               <div className="flex-1 flex items-center justify-center border-1 border-gray-400 rounded-md px-3 py-2 text-sm text-black">
-                                {service.fee}
+                                Check fee
                               </div>
                             </div>
                           </CardContent>
@@ -328,7 +203,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.label} ({category.count})
                       </SelectItem>
@@ -344,9 +219,8 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popularity">Most Popular</SelectItem>
                     <SelectItem value="alphabetical">A-Z</SelectItem>
-                    <SelectItem value="processing">Processing Time</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -355,12 +229,19 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
             {/* SERVICES - Card */}
             <div className="space-y-4">
               {filteredServices.map((service) => {
-                const IconComponent = service.icon;
+                const serviceNameLower = service.name?.toLowerCase() || ''
+                const iconKey = Object.keys(iconMap).find(key => 
+                  serviceNameLower.includes(key)
+                ) || 'default'
+                const IconComponent = iconMap[iconKey]
+                const requirements = service.booking_rules 
+                  ? service.booking_rules.split(',').map(r => r.trim()).filter(Boolean)
+                  : []
                 return (
                 <Card
                   key={service.id}
                   className="hover:shadow-md transition-shadow cursor-pointer border-r-5 border-r-blue-700"
-                  onClick={() => onSelectService(service.title)}
+                  onClick={() => onSelectService(service.id)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
@@ -375,7 +256,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                         {/* Title + Info */}
                         <div className="flex-1">
                           {/* Title */}
-                          <h3 className="text-lg font-semibold mb-1">{service.title}</h3>
+                          <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
 
                           {/* Description */}
                           <p className="text-gray-600 mb-3">{service.description}</p>
@@ -384,18 +265,17 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                           <div className="flex items-center space-x-3 mb-4">
                             <div className="flex items-center text-sm text-gray-700">
                               <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                              <span>{service.processingTime}</span>
+                              <span>{service.availability || 'N/A'}</span>
                             </div>
-                            {service.featured && (
-                              <Badge className="bg-yellow-200 text-yellow-800 flex items-center">
-                                <Star className="h-3 w-3 mr-1" />
-                                Featured
+                            {service.category && (
+                              <Badge variant="secondary">
+                                {service.category.name}
                               </Badge>
                             )}
                             <Badge
                               variant={service.availability === "24/7" ? "default" : "secondary"}
                             >
-                              {service.availability}
+                              {service.availability || 'Business hours'}
                             </Badge>
                           </div>
                         </div>
@@ -405,11 +285,11 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                       <div className="flex flex-col space-y-2 text-sm text-gray-700 ml-6 w-40">
                         <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>Fee: {service.fee}</span>
+                          <span>Check fee</span>
                         </div>
                         <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
                           <FileText className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{service.requirements.length} requirements</span>
+                          <span>{requirements.length} requirements</span>
                         </div>
                       </div>
                     </div>

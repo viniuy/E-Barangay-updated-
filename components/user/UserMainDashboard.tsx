@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Label } from "../ui/label"
 import Footer from "../Footer";
 import { useItems, useCategories } from '@/lib/hooks/useItems';
-import { getStatistics } from '@/app/actions/statistics';
+import { getStatistics } from '@/lib/api/statistics';
 import { ItemWithCategory } from '@/lib/database.types';
 
 import { 

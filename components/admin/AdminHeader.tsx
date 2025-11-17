@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface HeaderProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
 }
 
 export function Header({ onNavigate }: HeaderProps) {
@@ -35,19 +35,19 @@ export function Header({ onNavigate }: HeaderProps) {
             onClick={() => onNavigate('dashboard')}
             className="hover:text-blue-600"
           >
-            Home
+            Dashboard
           </button>
           <button 
-            onClick={() => onNavigate('services')}
+            onClick={() => onNavigate('directory')}
+            className="hover:text-blue-600"
+          >
+            Directory
+          </button>
+          <button 
+            onClick={() => onNavigate('requests')}
             className="hover:text-blue-600"
           >
             Requests
-          </button>
-          <button 
-            onClick={() => onNavigate('facilities')}
-            className="hover:text-blue-600"
-          >
-            Edit Directory
           </button>
         </nav>
 

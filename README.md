@@ -8,7 +8,9 @@ A comprehensive online government service portal with modern UI design, accessib
 - 🌐 **Multi-language Support** - English, Sinhala, and Tamil
 - 📱 **Responsive Design** - Works on all devices
 - ♿ **Accessible** - Built with accessibility in mind
-- 🔐 **Supabase Integration** - Secure backend with Row Level Security (RLS)
+- 🔐 **Prisma ORM** - Type-safe database access with Prisma
+- 🌐 **RESTful API** - Clean API routes using Next.js App Router
+- 📡 **Axios Integration** - Centralized HTTP client for all API calls
 
 ## Getting Started
 
@@ -16,7 +18,8 @@ A comprehensive online government service portal with modern UI design, accessib
 
 - Node.js (v18 or higher)
 - npm or yarn
-- A Supabase account and project (for backend functionality)
+- PostgreSQL database (or Supabase PostgreSQL)
+- A Supabase account and project (for authentication - optional)
 
 ### Installation
 
@@ -32,23 +35,89 @@ npm install
 ```
 
 3. Set up environment variables:
-   - Copy `.env.local.example` to `.env.local`
-   - Fill in your Supabase credentials:
+   - Create a `.env.local` file in the root directory
+   - Add your database connection string:
+     ```env
+     DATABASE_URL="postgresql://user:password@localhost:5432/dbname?schema=public"
+     ```
+   - For Supabase, you can find the connection string in: Settings > Database > Connection string (URI)
+   - Optional: If using Supabase Auth:
      ```env
      NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
      NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
-   - You can find these values in your Supabase project settings: https://app.supabase.com/project/_/settings/api
+   - Optional: Custom API URL (defaults to `/api`):
+     ```env
+     NEXT_PUBLIC_API_URL="/api"
+     ```
 
-4. Start the development server:
+4. Set up the database:
+```bash
+# Generate Prisma Client
+npm run prisma:generate
+
+# Run migrations (if you have migrations)
+npm run prisma:migrate
+
+# Or use Prisma Studio to view/manage data
+npm run prisma:studio
+```
+
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-5. Open your browser and navigate to:
+6. Open your browser and navigate to:
 ```
 http://localhost:3000
 ```
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Database**: PostgreSQL with Prisma ORM
+- **API**: Next.js API Routes with axios
+- **Authentication**: Supabase Auth (optional)
+- **UI Components**: shadcn/ui (Radix UI)
+- **Styling**: Tailwind CSS
+- **Maps**: Leaflet
+- **Forms**: React Hook Form
+
+## Project Structure
+
+```
+├── app/
+│   ├── api/              # API routes (using Prisma)
+│   │   ├── categories/
+│   │   ├── items/
+│   │   ├── requests/
+│   │   └── statistics/
+│   ├── actions/          # Server actions (legacy - being migrated)
+│   └── page.tsx
+├── components/           # React components
+├── lib/
+│   ├── api/              # API client functions (using axios)
+│   ├── hooks/            # React hooks
+│   ├── prisma.ts         # Prisma client instance
+│   └── axios.ts          # Axios instance configuration
+├── prisma/
+│   └── schema.prisma     # Prisma schema
+└── public/
+```
+
+## API Endpoints
+
+All API endpoints are prefixed with `/api`:
+
+- `GET /api/categories` - Get all categories
+- `GET /api/categories?id={id}` - Get category by ID
+- `GET /api/items` - Get all items (supports `type`, `categoryId`, `search` query params)
+- `GET /api/items?id={id}` - Get item by ID
+- `GET /api/requests` - Get all requests (supports `userId`, `status` query params)
+- `POST /api/requests` - Create a new request
+- `PATCH /api/requests` - Update request status
+- `GET /api/statistics` - Get aggregated statistics
 
 ### Build for Production
 

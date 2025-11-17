@@ -1,28 +1,16 @@
 'use server'
 
+import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 
 /**
  * Check if database connection is working
- * Use this to verify your Supabase setup
+ * Use this to verify your Prisma database connection
  */
 export async function checkDatabaseConnection() {
   try {
-    const supabase = await createClient()
-    
-    // Test query - try to fetch categories
-    const { data, error } = await supabase
-      .from('categories')
-      .select('count')
-      .limit(1)
-
-    if (error) {
-      return {
-        connected: false,
-        error: error.message,
-        message: 'Database connection failed. Please check your Supabase configuration.'
-      }
-    }
+    // Test query - try to fetch categories using Prisma
+    await prisma.category.findFirst()
 
     return {
       connected: true,

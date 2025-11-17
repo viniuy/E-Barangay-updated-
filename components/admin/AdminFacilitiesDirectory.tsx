@@ -1,96 +1,67 @@
-import { useState } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react';
 import { Header } from './AdminHeader';
 import { Input } from '../ui/input';
 import { Search, Clock } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useItems, useCategories } from '@/lib/hooks/useItems';
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
 import Footer from "../Footer";
 
 interface FacilityDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
   onSelectFacility: (facility: string) => void;
 }
 
-// Fix for Leaflet default icon in Next.js
-if (typeof window !== 'undefined') {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  });
-}
+export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDirectoryProps) {
+  const { items: facilities, loading } = useItems('facility')
+  const { categories } = useCategories()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
-const facilities = [
-  { name: "Barangay Gynmnasium", lat: 14.4140, lng: 120.9705 },
-  { name: "Barangay Multipurpose Hall", lat: 14.3540, lng: 120.9419 },
-  { name: "Solviento Villas Bacoor Cavite", lat: 14.41, lng: 120.97 },
-];
+  // Fix for Leaflet default icon in Next.js
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+    }
+  }, []);
 
-const allFacilities = [
-  {
-    id: 1,
-    title: 'Barangay Covered Court',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'covered-court',
-    image: '/images/Covered-court.jpeg',
-    processingTime: '1-2 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 2,
-    title: 'Barangay Basketball Court',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'basketball-court',
-    image: '/images/Basketball-court.jpg',
-    processingTime: '1 day',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 3,
-    title: 'Barangay Multipurpose Hall',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'multipurpose-hall',
-    image: '/images/Multipurpose-hall.jpg',
-    processingTime: '2-5 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 4,
-    title: 'Barangay Function Room',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'function-room',
-    image: '/images/Function-room.jpg',
-    processingTime: '3 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
+  const categoryOptions = [
+    { id: 'all', label: 'All Facilities', count: facilities.length },
+    ...categories.map(cat => ({
+      id: cat.id,
+      label: cat.name,
+      count: facilities.filter(f => f.category_id === cat.id).length
+    }))
+  ]
+
+  const filteredFacilities = facilities.filter(facility => {
+    const matchesSearch = facility.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         facility.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         false
+    const matchesCategory = selectedCategory === 'all' || facility.category_id === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  // Extract coordinates from facilities (if available in database)
+  // Note: latitude/longitude fields may need to be added to the database schema
+  const mapFacilities: Array<{ name: string; lat: number; lng: number }> = []
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading facilities...</div>
+      </div>
+    )
   }
-];
-
-const categories = [
-  { id: 'all', label: 'All Facilities', count: allFacilities.length },
-  { id: 'covered-court', label: 'Covered Court', count: 2 },
-  { id: 'basketball-court', label: 'Basketball Court', count: 1 },
-  { id: 'multipurpose-hall', label: 'Multipurpose Hall', count: 1 },
-  { id: 'function-room', label: 'Function Room', count: 1 }
-];
-
-export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDirectoryProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
-  const filteredServices = allFacilities
-    .filter(facility => {
-      const matchesSearch = facility.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           facility.address.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || facility.category === selectedCategory;
-      return matchesSearch && matchesCategory
-    });
 
   return (
     <div>
@@ -113,11 +84,17 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {facilities.map((facility, idx) => (
-                <Marker key={idx} position={[facility.lat, facility.lng]}>
-                  <Popup>{facility.name}</Popup>
+              {mapFacilities.length > 0 ? (
+                mapFacilities.map((facility, idx) => (
+                  <Marker key={idx} position={[facility.lat, facility.lng]}>
+                    <Popup>{facility.name}</Popup>
+                  </Marker>
+                ))
+              ) : (
+                <Marker position={[14.41, 120.97]}>
+                  <Popup>Barangay Location</Popup>
                 </Marker>
-              ))}
+              )}
             </MapContainer>
           </div>
 
@@ -125,7 +102,7 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
           {/* FACILITIES - Search Box */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">All Facilities ({filteredServices.length})</h2>
+              <h2 className="text-xl font-semibold">All Facilities ({filteredFacilities.length})</h2>
             </div>
             {/* Search + Category */}
             <div className="flex items-center gap-4 mb-6">
@@ -150,7 +127,7 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.label} ({category.count})
                       </SelectItem>
@@ -163,27 +140,27 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
 
           {/* FACILITIES - Card */}
           <div className="space-y-4 grid md:grid-cols-3 gap-4">
-            {filteredServices.map((facilities) => {
+            {filteredFacilities.map((facility) => {
               return (
-              <div className='w-full max-w-4xl'>
+              <div key={facility.id} className='w-full max-w-4xl'>
                 <Card 
                   className="rounded-lg hover:shadow-lg transition-shadow cursor-pointer max-h-120px flex flex-col"
-                  onClick={() => onSelectFacility(facilities.title)}
+                  onClick={() => onSelectFacility(facility.id)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-4">
                       {/* Image on the left */}
                       <img
-                        src={facilities.image}
-                        alt={facilities.title}
+                        src={facility.image_url || '/images/default-facility.jpg'}
+                        alt={facility.name || 'Facility'}
                         className="w-48 h-36 object-cover rounded-lg border border-blue-800"
                       />
 
                       {/* Text content beside the image */}
                       <div className="flex flex-col justify-center text-left">
-                        <CardTitle className="text-lg font-bold mb-1">{facilities.title}</CardTitle>
+                        <CardTitle className="text-lg font-bold mb-1">{facility.name}</CardTitle>
                         <CardDescription className="text-sm text-gray-600">
-                          {facilities.address}
+                          {facility.description || 'No description available'}
                         </CardDescription>
                       </div>
                     </div>
@@ -194,12 +171,12 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                       {/* Processing Time Box */}
                       <div className="flex-1 flex items-center justify-center border border-gray-400 rounded-md px-3 py-2 text-sm text-black">
                         <Clock className="h-4 w-4 mr-1" />
-                        {facilities.processingTime}
+                        {facility.availability || 'N/A'}
                       </div>
 
                       {/* Fee Box */}
                       <div className="flex-1 flex items-center justify-center border border-gray-400 rounded-md px-3 py-2 text-sm text-black">
-                        {facilities.fee}
+                        Check fee
                       </div>
                     </div>
                   </CardContent>
@@ -209,7 +186,7 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
             })}
           </div>
 
-          {filteredServices.length === 0 && (
+          {filteredFacilities.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-400 text-lg mb-2">No services found</div>
               <p className="text-gray-600">Try adjusting your search or filter criteria</p>

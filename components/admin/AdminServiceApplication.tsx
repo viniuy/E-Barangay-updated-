@@ -1,5 +1,9 @@
-import { useState } from 'react';
+'use client'
+
+import { useState, useEffect } from 'react';
 import { Header } from './AdminHeader';
+import { getItemById } from '@/lib/api/items';
+import { ItemWithCategory } from '@/lib/database.types';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -27,123 +31,12 @@ import {
 
 interface ServiceApplicationProps {
   service: string | null;
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
 }
 
-const serviceDetails = {
-  'Apply Visa Online': {
-    title: 'Apply Visa Online',
-    description: 'Electronic visa application for tourists and business travelers visiting Sri Lanka',
-    processingTime: '3-5 business days',
-    fee: 'USD 35',
-    requirements: [
-      'Valid passport (minimum 6 months validity)',
-      'Passport-sized photograph',
-      'Travel itinerary or hotel booking',
-      'Return flight ticket',
-      'Bank statement (last 3 months)',
-      'Travel insurance (recommended)'
-    ],
-    steps: [
-      'Fill application form',
-      'Upload required documents',
-      'Make payment',
-      'Submit application',
-      'Track status',
-      'Download visa'
-    ],
-    availability: '24/7 online service'
-  },
-  'Vehicle Registration': {
-    title: 'Vehicle Registration',
-    description: 'Register your new or imported vehicle with the Department of Motor Traffic',
-    processingTime: '2-3 business days',
-    fee: 'LKR 5,000',
-    requirements: [
-      'Vehicle import permit',
-      'Insurance certificate',
-      'National ID or passport',
-      'Proof of address',
-      'Vehicle inspection certificate',
-      'Payment receipt'
-    ],
-    steps: [
-      'Submit application',
-      'Document verification',
-      'Vehicle inspection',
-      'Payment processing',
-      'Registration approval',
-      'Collect certificate'
-    ],
-    availability: 'Business hours'
-  },
-  'Birth Certificate': {
-    title: 'Birth Certificate',
-    description: 'Apply for official birth certificate copy from the Department of Registration',
-    processingTime: '1-2 business days',
-    fee: 'LKR 150',
-    requirements: [
-      'Parent identification documents',
-      'Hospital birth records',
-      'Application form',
-      'Proof of relationship'
-    ],
-    steps: [
-      'Fill application',
-      'Submit documents',
-      'Payment',
-      'Verification',
-      'Certificate issuance'
-    ],
-    availability: '24/7 online service'
-  },
-  'Police Clearance': {
-    title: 'Police Clearance Certificate',
-    description: 'Criminal background verification certificate from Sri Lanka Police',
-    processingTime: '5-7 business days',
-    fee: 'LKR 500',
-    requirements: [
-      'National ID card',
-      'Application form',
-      'Fingerprint report',
-      'Passport-sized photographs',
-      'Purpose declaration'
-    ],
-    steps: [
-      'Online application',
-      'Fingerprint submission',
-      'Background verification',
-      'Certificate generation',
-      'Collection/delivery'
-    ],
-    availability: 'Business hours'
-  },
-  'Business Registration': {
-    title: 'Business Registration',
-    description: 'Register your new business with the Registrar of Companies',
-    processingTime: '7-10 business days',
-    fee: 'LKR 2,500',
-    requirements: [
-      'Business plan',
-      'Identity documents',
-      'Proof of address',
-      'Business name reservation',
-      'Partnership agreement',
-      'MOA and AOA'
-    ],
-    steps: [
-      'Name reservation',
-      'Document preparation',
-      'Online submission',
-      'Fee payment',
-      'Verification process',
-      'Certificate issuance'
-    ],
-    availability: 'Business hours'
-  }
-};
-
 export function ServiceApplication({ service, onNavigate }: ServiceApplicationProps) {
+  const [item, setItem] = useState<ItemWithCategory | null>(null)
+  const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -160,7 +53,45 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
     agreeToTerms: false
   });
 
-  const details = serviceDetails[service as keyof typeof serviceDetails] || serviceDetails['Apply Visa Online'];
+  useEffect(() => {
+    async function loadItem() {
+      if (!service) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const itemData = await getItemById(service)
+        setItem(itemData)
+      } catch (error) {
+        console.error('Failed to load item:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadItem()
+  }, [service])
+
+  // Parse requirements from booking_rules or use defaults
+  const requirements = item?.booking_rules 
+    ? item.booking_rules.split(',').map(r => r.trim()).filter(Boolean)
+    : ['Valid ID', 'Accomplished request form', 'Cedula']
+
+  const details = item ? {
+    title: item.name || 'Service',
+    description: item.description || '',
+    processingTime: item.availability || 'N/A',
+    fee: 'Check with barangay',
+    requirements: requirements,
+    steps: [
+      'Fill application form',
+      'Submit required documents',
+      'Wait for processing',
+      'Receive confirmation'
+    ],
+    availability: item.availability || 'Business hours'
+  } : null
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
 
@@ -179,6 +110,27 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
       setCurrentStep(currentStep - 1);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading service details...</div>
+      </div>
+    )
+  }
+
+  if (!item || !details) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Service not found</h2>
+          <Button onClick={() => onNavigate('services')}>
+            Back to Services
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

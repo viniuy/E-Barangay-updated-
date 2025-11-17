@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { MainDashboard } from '@/components/user/UserMainDashboard'
 import { ServiceDirectory } from '@/components/user/UserServiceDirectory'
 import { ServiceForm } from '@/components/user/UserServiceForm'
 import { UserRequests } from '@/components/user/UserRequests'
+import { getCurrentUser } from '@/app/actions/auth'
 
 // Dynamically import FacilitiesDirectory to avoid SSR issues with Leaflet
 const FacilitiesDirectory = dynamic(
@@ -18,6 +20,20 @@ type View = 'dashboard' | 'services' | 'facilities' | 'application' | 'requests'
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    async function checkUserRole() {
+      const user = await getCurrentUser()
+      if (user && user.role === 'staff') {
+        router.push('/admin')
+        return
+      }
+      setLoading(false)
+    }
+    checkUserRole()
+  }, [router])
 
   const renderView = () => {
     switch (currentView) {
@@ -67,6 +83,17 @@ export default function Home() {
       default:
         return <MainDashboard onNavigate={setCurrentView} />
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return <div className="min-h-screen bg-background">{renderView()}</div>

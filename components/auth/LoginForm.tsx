@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,6 +25,7 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,6 +40,14 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
         onOpenChange(false)
         setEmail('')
         setPassword('')
+        
+        // Redirect based on role
+        if (result.role === 'staff') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+          router.refresh()
+        }
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')

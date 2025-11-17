@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { getItemById } from "@/app/actions/items";
-import { createRequest } from "@/app/actions/requests";
+import { getItemById } from "@/lib/api/items";
+import { createRequest } from "@/lib/api/requests";
 import { ItemWithCategory } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/client";
 

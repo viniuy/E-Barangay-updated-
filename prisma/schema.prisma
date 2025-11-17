@@ -1,0 +1,123 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL_POSTGRES_PRISMA_URL")
+  directUrl = env("DATABASE_URL_POSTGRES_URL_NON_POOLING")
+}
+        
+
+model User {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username        String          @unique
+  password        String
+  email           String          @unique
+  userRole        user_role       @default(resident) @map("role")
+  createdAt       DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime?       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  request_actions RequestAction[]
+  requests        Request[]
+  statistics      Statistics[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String    @unique
+  description String?
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  items       Item[]
+
+  @@map("categories")
+}
+
+model Item {
+  id           String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String
+  description  String?
+  categoryId   String?      @map("category_id") @db.Uuid
+  type         String?
+  status       item_status? @default(available)
+  imageUrl     String?      @map("image_url")
+  availability String?
+  bookingRules String?      @map("booking_rules")
+  createdAt    DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category     Category?    @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  requests     Request[]
+  statistics   Statistics[]
+
+  @@index([categoryId], map: "idx_items_category_id")
+  @@map("items")
+}
+
+model Request {
+  id          String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String?         @map("user_id") @db.Uuid
+  itemId      String?         @map("item_id") @db.Uuid
+  status      request_status? @default(pending)
+  reason      String?
+  submittedAt DateTime?       @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  updatedAt   DateTime?       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  actions     RequestAction[]
+  item        Item?           @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        User?           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([itemId], map: "idx_requests_item")
+  @@index([status], map: "idx_requests_status")
+  @@index([userId], map: "idx_requests_user")
+  @@map("requests")
+}
+
+model RequestAction {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  requestId   String?   @map("request_id") @db.Uuid
+  adminUserId String?   @map("admin_user_id") @db.Uuid
+  actionType  String    @map("action_type")
+  remarks     String?
+  actionDate  DateTime? @default(now()) @map("action_date") @db.Timestamptz(6)
+  users       User?     @relation(fields: [adminUserId], references: [id], onUpdate: NoAction)
+  request     Request?  @relation(fields: [requestId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([requestId], map: "idx_request_actions_request_id")
+  @@map("request_actions")
+}
+
+model Statistics {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  generatedByUserId String?   @map("generated_by_user_id") @db.Uuid
+  dateRecorded      DateTime  @map("date_recorded") @db.Date
+  totalRequests     Int?      @default(0) @map("total_requests")
+  approvedCount     Int?      @default(0) @map("approved_count")
+  rejectedCount     Int?      @default(0) @map("rejected_count")
+  topItemId         String?   @map("top_item_id") @db.Uuid
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  users             User?     @relation(fields: [generatedByUserId], references: [id], onUpdate: NoAction)
+  items             Item?     @relation(fields: [topItemId], references: [id], onUpdate: NoAction)
+
+  @@index([generatedByUserId], map: "idx_statistics_user_id")
+  @@map("statistics")
+}
+
+enum item_status {
+  available
+  unavailable
+  maintenance
+  archived
+}
+
+enum request_status {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum user_role {
+  resident
+  staff
+}
