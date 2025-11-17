@@ -67,9 +67,15 @@ export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProp
 
   // Filter categories for services and facilities
   const serviceCategories = categories
-    .filter(cat => services.some(s => s.category_id === cat.id))
+    .filter(cat => services.some(s => {
+      const categoryId = (s as any).categoryId || (s as any).category_id
+      return categoryId === cat.id
+    }))
     .map((cat, index) => {
-      const count = services.filter(s => s.category_id === cat.id).length
+      const count = services.filter(s => {
+        const categoryId = (s as any).categoryId || (s as any).category_id
+        return categoryId === cat.id
+      }).length
       const nameLower = cat.name?.toLowerCase() || ''
       const iconKey = Object.keys(categoryIconMap).find(key => nameLower.includes(key)) || 'default'
       const IconComponent = categoryIconMap[iconKey]
@@ -87,9 +93,15 @@ export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProp
     })
 
   const facilityReservation = categories
-    .filter(cat => facilities.some(f => f.category_id === cat.id))
+    .filter(cat => facilities.some(f => {
+      const categoryId = (f as any).categoryId || (f as any).category_id
+      return categoryId === cat.id
+    }))
     .map((cat, index) => {
-      const count = facilities.filter(f => f.category_id === cat.id).length
+      const count = facilities.filter(f => {
+        const categoryId = (f as any).categoryId || (f as any).category_id
+        return categoryId === cat.id
+      }).length
       const nameLower = cat.name?.toLowerCase() || ''
       const iconKey = Object.keys(facilityIconMap).find(key => nameLower.includes(key)) || 'default'
       const IconComponent = facilityIconMap[iconKey]
@@ -260,7 +272,7 @@ const Faq1 = ({
                   <h2 className="text-2xl">Permits & Licenses</h2>
                   <Button 
                     variant="outline" 
-                    onClick={() => onNavigate('services')}
+                    onClick={() => onNavigate('directory')}
                   >
                     View All
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -274,7 +286,7 @@ const Faq1 = ({
                       <Card 
                         key={category.id} 
                         className="hover:shadow-lg transition-shadow cursor-pointer relative"
-                        onClick={() => onNavigate('services')}
+                        onClick={() => onNavigate('directory')}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
@@ -306,7 +318,7 @@ const Faq1 = ({
                   <h2 className="text-2xl">Facilities Reservation</h2>
                   <Button 
                     variant="outline" 
-                    onClick={() => onNavigate('facilities')}
+                    onClick={() => onNavigate('directory')}
                   >
                     View All
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -320,7 +332,7 @@ const Faq1 = ({
                       <Card 
                         key={category.id} 
                         className="hover:shadow-lg transition-shadow cursor-pointer relative"
-                        onClick={() => onNavigate('facilities')}
+                        onClick={() => onNavigate('directory')}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">

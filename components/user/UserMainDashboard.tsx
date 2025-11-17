@@ -195,7 +195,10 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   // Group services by category
   const serviceCategories = categories
     .map(category => {
-      const categoryServices = services.filter(s => s.category_id === category.id)
+      const categoryServices = services.filter(s => {
+        const categoryId = (s as any).categoryId || (s as any).category_id
+        return categoryId === category.id
+      })
       if (categoryServices.length === 0) return null
       
       const categoryName = category.name.toLowerCase()
@@ -214,7 +217,10 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
   // Group facilities by category/type
   const facilityReservation = categories
     .map(category => {
-      const categoryFacilities = facilities.filter(f => f.category_id === category.id)
+      const categoryFacilities = facilities.filter(f => {
+        const categoryId = (f as any).categoryId || (f as any).category_id
+        return categoryId === category.id
+      })
       if (categoryFacilities.length === 0) return null
       
       const categoryName = category.name.toLowerCase().replace(/\s+/g, '-')

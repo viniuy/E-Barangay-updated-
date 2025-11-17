@@ -88,7 +88,7 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
     const categoryOptions = categories.map(cat => ({
       id: cat.id,
       label: cat.name,
-      count: items.filter(item => item.categoryId === cat.id).length
+      count: items.filter(item => (item as any).categoryId === cat.id || (item as any).category_id === cat.id).length
     }))
     return [allOption, ...categoryOptions]
   }, [categories, items, activeTab])
@@ -98,7 +98,8 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
       const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            false
-      const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory
+      const itemCategoryId = (item as any).categoryId || (item as any).category_id
+      const matchesCategory = selectedCategory === 'all' || itemCategoryId === selectedCategory
       return matchesSearch && matchesCategory
     })
 
@@ -222,7 +223,7 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
                           <div className="flex flex-col space-y-2 text-sm text-gray-700 ml-6 w-40">
                             <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
                               <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                              <span>{item.bookingRules || 'Check fee'}</span>
+                              <span>{(item as any).bookingRules || (item as any).booking_rules || 'Check fee'}</span>
                             </div>
                           </div>
                         </div>

@@ -96,8 +96,9 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
   }
 
   // Parse booking rules or requirements from the item
-  const requirements = item.booking_rules 
-    ? item.booking_rules.split(',').map(r => r.trim()).filter(Boolean)
+  const bookingRules = (item as any).bookingRules || (item as any).booking_rules
+  const requirements = bookingRules
+    ? bookingRules.split(',').map((r: string) => r.trim()).filter(Boolean)
     : ['Name', 'Contact Number', 'Purpose'];
 
   return (
@@ -111,7 +112,7 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {requirements.map((req, idx) => (
+        {requirements.map((req: string, idx: number) => (
           <div key={idx}>
             <label className="block text-sm font-medium text-gray-700">{req}</label>
             <input

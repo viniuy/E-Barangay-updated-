@@ -61,7 +61,10 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
     const categoryOptions = categories.map(cat => ({
       id: cat.id,
       label: cat.name,
-      count: services.filter(s => s.category_id === cat.id).length
+      count: services.filter(s => {
+        const categoryId = (s as any).categoryId || (s as any).category_id
+        return categoryId === cat.id
+      }).length
     }))
     return [allOption, ...categoryOptions]
   }, [categories, services])
@@ -71,7 +74,8 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
       const matchesSearch = service.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            false
-      const matchesCategory = selectedCategory === 'all' || service.category_id === selectedCategory
+      const categoryId = (service as any).categoryId || (service as any).category_id
+      const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory
       return matchesSearch && matchesCategory
     })
 
@@ -269,7 +273,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                           <span>Type: {service.type || 'N/A'}</span>
                         </div>
-                        {service.booking_rules && (
+                        {((service as any).bookingRules || (service as any).booking_rules) && (
                           <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
                             <FileText className="h-4 w-4 mr-2 text-gray-400" />
                             <span>Rules available</span>

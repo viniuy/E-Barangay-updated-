@@ -45,7 +45,10 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
     const categoryOptions = categories.map(cat => ({
       id: cat.id,
       label: cat.name,
-      count: facilities.filter(f => f.category_id === cat.id).length
+      count: facilities.filter(f => {
+        const categoryId = (f as any).categoryId || (f as any).category_id
+        return categoryId === cat.id
+      }).length
     }))
     return [allOption, ...categoryOptions]
   }, [categories, facilities])
@@ -55,7 +58,8 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
       const matchesSearch = facility.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            facility.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            false
-      const matchesCategory = selectedCategory === 'all' || facility.category_id === selectedCategory
+      const categoryId = (facility as any).categoryId || (facility as any).category_id
+      const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory
       return matchesSearch && matchesCategory
     })
   }, [facilities, searchTerm, selectedCategory])
@@ -149,9 +153,9 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-4">
                       {/* Image on the left */}
-                      {facility.image_url ? (
+                      {((facility as any).imageUrl || (facility as any).image_url) ? (
                         <img
-                          src={facility.image_url}
+                          src={(facility as any).imageUrl || (facility as any).image_url}
                           alt={facility.name || 'Facility'}
                           className="w-48 h-36 object-cover rounded-lg border border-blue-800"
                         />

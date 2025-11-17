@@ -31,7 +31,7 @@ import {
 
 interface ServiceApplicationProps {
   service: string | null;
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
 }
 
 export function ServiceApplication({ service, onNavigate }: ServiceApplicationProps) {
@@ -124,8 +124,8 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Service not found</h2>
-          <Button onClick={() => onNavigate('services')}>
-            Back to Services
+          <Button onClick={() => onNavigate('directory')}>
+            Back to Directory
           </Button>
         </div>
       </div>
@@ -141,11 +141,11 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => onNavigate('services')}
+            onClick={() => onNavigate('directory')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Services
+            Back to Directory
           </Button>
           
           <h1 className="text-3xl mb-2">{details.title}</h1>

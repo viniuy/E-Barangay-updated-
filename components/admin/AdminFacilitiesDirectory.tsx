@@ -13,7 +13,7 @@ import * as L from "leaflet";
 import Footer from "../Footer";
 
 interface FacilityDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
   onSelectFacility: (facility: string) => void;
 }
 
@@ -39,7 +39,10 @@ export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDire
     ...categories.map(cat => ({
       id: cat.id,
       label: cat.name,
-      count: facilities.filter(f => f.category_id === cat.id).length
+      count: facilities.filter(f => {
+        const categoryId = (f as any).categoryId || (f as any).category_id
+        return categoryId === cat.id
+      }).length
     }))
   ]
 
@@ -47,7 +50,8 @@ export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDire
     const matchesSearch = facility.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          facility.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          false
-    const matchesCategory = selectedCategory === 'all' || facility.category_id === selectedCategory
+    const categoryId = (facility as any).categoryId || (facility as any).category_id
+    const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory
     return matchesSearch && matchesCategory
   })
 
@@ -151,7 +155,7 @@ export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDire
                     <div className="flex items-start gap-4">
                       {/* Image on the left */}
                       <img
-                        src={facility.image_url || '/images/default-facility.jpg'}
+                        src={(facility as any).imageUrl || (facility as any).image_url || '/images/default-facility.jpg'}
                         alt={facility.name || 'Facility'}
                         className="w-48 h-36 object-cover rounded-lg border border-blue-800"
                       />

@@ -74,8 +74,9 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
   }, [service])
 
   // Parse requirements from booking_rules or use defaults
-  const requirements = item?.booking_rules 
-    ? item.booking_rules.split(',').map(r => r.trim()).filter(Boolean)
+  const bookingRules = item ? ((item as any).bookingRules || (item as any).booking_rules) : null
+  const requirements = bookingRules
+    ? bookingRules.split(',').map((r: string) => r.trim()).filter(Boolean)
     : ['Valid ID', 'Accomplished request form', 'Cedula']
 
   const details = item ? {
@@ -318,7 +319,7 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
                       </AlertDescription>
                     </Alert>
 
-                    {details?.requirements.map((requirement, index) => (
+                    {details?.requirements.map((requirement: string, index: number) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
@@ -574,7 +575,7 @@ export function ServiceApplication({ service, onNavigate }: ServiceApplicationPr
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  {details?.requirements.map((req, index) => (
+                  {details?.requirements.map((req: string, index: number) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
                       <span>{req}</span>

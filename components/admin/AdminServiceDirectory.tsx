@@ -38,7 +38,7 @@ import {
 import Footer from "../Footer";
 
 interface ServiceDirectoryProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
   onSelectService: (service: string) => void;
 }
 
@@ -70,7 +70,10 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
     const categoryOptions = categories.map(cat => ({
       id: cat.id,
       label: cat.name,
-      count: services.filter(s => s.category_id === cat.id).length
+      count: services.filter(s => {
+        const categoryId = (s as any).categoryId || (s as any).category_id
+        return categoryId === cat.id
+      }).length
     }))
     return [allOption, ...categoryOptions]
   }, [categories, services])
@@ -80,7 +83,8 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
       const matchesSearch = service.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            false
-      const matchesCategory = selectedCategory === 'all' || service.category_id === selectedCategory
+      const categoryId = (service as any).categoryId || (service as any).category_id
+      const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory
       return matchesSearch && matchesCategory
     })
 
