@@ -7,8 +7,9 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 export async function createSession(userId: string) {
   const cookieStore = await cookies()
   
-  // Generate a simple session token (in production, use a more secure method)
-  const sessionToken = `${userId}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+  // Session token keeps the full UUID intact by using a delimiter not present in UUIDs.
+  const randomPart = `${Date.now()}-${Math.random().toString(36).substring(2)}`
+  const sessionToken = `${userId}::${randomPart}`
   
   cookieStore.set(SESSION_COOKIE_NAME, sessionToken, {
     httpOnly: true,
@@ -29,8 +30,19 @@ export async function getSession() {
     return null
   }
 
-  // Extract user ID from session token
-  const userId = sessionToken.split('-')[0]
+  // Extract user ID from session token (preserves UUID hyphen structure)
+  if (!sessionToken.includes('::')) {
+    // Legacy session token format (cannot recover full UUID). Clear it and treat as unauthenticated.
+    cookieStore.delete(SESSION_COOKIE_NAME)
+    return null
+  }
+
+  const [userId] = sessionToken.split('::')
+
+  if (!isValidUuid(userId)) {
+    cookieStore.delete(SESSION_COOKIE_NAME)
+    return null
+  }
 
   if (!userId) {
     return null
@@ -64,5 +76,10 @@ export async function getSession() {
 export async function deleteSession() {
   const cookieStore = await cookies()
   cookieStore.delete(SESSION_COOKIE_NAME)
+}
+
+function isValidUuid(value: string): boolean {
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+  return uuidRegex.test(value)
 }
 

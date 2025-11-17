@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { MainDashboard } from '@/components/admin/AdminMainDashboard'
 import { AdminDirectory } from '@/components/admin/AdminDirectory'
 import { AdminRequestManagement } from '@/components/admin/AdminRequestManagement'
-import { getCurrentUser } from '@/app/actions/auth'
 import dynamic from 'next/dynamic'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 // Dynamically import to avoid SSR issues
 const AdminDirectoryDynamic = dynamic(
@@ -21,28 +21,19 @@ export default function AdminPage() {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    async function checkUser() {
-      const user = await getCurrentUser()
-      if (!user) {
-        router.push('/')
-        return
-      }
-      
-      if (user.role !== 'staff') {
-        router.push('/')
-        return
-      }
-      
-      setUserRole(user.role)
-      setLoading(false)
+    if (authLoading) return
+    if (!user || user.role !== 'staff') {
+      router.push('/')
+      return
     }
-    
-    checkUser()
-  }, [router])
+    setUserRole(user.role)
+    setLoading(false)
+  }, [authLoading, user, router])
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
