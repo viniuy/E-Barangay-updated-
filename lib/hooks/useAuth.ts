@@ -18,7 +18,7 @@ export function useAuth() {
     // Fetch current user from API
     const fetchUser = async () => {
       try {
-        const response = await axiosInstance.get('/api/auth/me')
+        const response = await axiosInstance.get('/auth/me')
         setUser(response.data.user)
       } catch (error) {
         setUser(null)

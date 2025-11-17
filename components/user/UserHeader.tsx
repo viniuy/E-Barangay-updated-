@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { Menu, Landmark, User } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/lib/hooks/useAuth'
-import { signOut } from '@/app/actions/auth'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SignupForm } from '@/components/auth/SignupForm'
+import axiosInstance from '@/lib/axios'
+import { useRouter } from 'next/navigation'
 
 import {
   DropdownMenu,
@@ -24,11 +25,17 @@ interface HeaderProps {
 
 export function Header({ onNavigate }: HeaderProps) {
   const { user, loading } = useAuth()
+  const router = useRouter()
   const [loginOpen, setLoginOpen] = useState(false)
   const [signupOpen, setSignupOpen] = useState(false)
 
   const handleSignOut = async () => {
-    await signOut()
+    try {
+      await axiosInstance.post('/auth/logout')
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to log out:', error)
+    }
   }
 
   return (

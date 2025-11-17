@@ -1,6 +1,7 @@
 import { Menu, Landmark } from 'lucide-react';
 import { Button } from "@/components/ui/button"
-
+import axiosInstance from '@/lib/axios'
+import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,16 @@ interface HeaderProps {
 }
 
 export function Header({ onNavigate }: HeaderProps) {
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    try {
+      await axiosInstance.post('/auth/logout')
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to log out:', error)
+    }
+  }
   return (
 
     <div className="max-w-4xl mx-auto px-6">
@@ -75,7 +86,7 @@ export function Header({ onNavigate }: HeaderProps) {
               <DropdownMenuGroup>
                 <DropdownMenuItem> View All Requests </DropdownMenuItem>
                 <DropdownMenuItem> Settings </DropdownMenuItem>
-                <DropdownMenuItem> Log Out </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}> Log Out </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>

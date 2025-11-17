@@ -47,6 +47,38 @@ interface MainDashboardProps {
   onSelectService?: (service: string) => void;
 }
 
+// Icon mapping for categories
+const categoryIconMap: Record<string, any> = {
+  'education': GraduationCap,
+  'travel': Plane,
+  'health': Heart,
+  'business': Building,
+  'transport': Car,
+  'social': Users,
+  'security': Shield,
+  'default': FileCheck2,
+}
+
+const facilityIconMap: Record<string, any> = {
+  'basketball': ShoppingBasket,
+  'court': Volleyball,
+  'hall': Landmark,
+  'function': Warehouse,
+  'default': Landmark,
+}
+
+// Color mapping
+const colorClasses = [
+  'bg-purple-100 text-purple-600',
+  'bg-green-100 text-green-600',
+  'bg-red-100 text-red-600',
+  'bg-orange-100 text-orange-600',
+  'bg-indigo-100 text-indigo-600',
+  'bg-pink-100 text-pink-600',
+  'bg-gray-100 text-gray-600',
+  'bg-blue-100 text-blue-800',
+]
+
 export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProps) {
   const { categories, loading: categoriesLoading } = useCategories()
   const { items: services } = useItems('service')
@@ -128,38 +160,6 @@ interface Faq1Props {
   heading?: string;
   items?: FaqItem[];
 }
-
-// Icon mapping for categories
-const categoryIconMap: Record<string, any> = {
-  'education': GraduationCap,
-  'travel': Plane,
-  'health': Heart,
-  'business': Building,
-  'transport': Car,
-  'social': Users,
-  'security': Shield,
-  'default': FileCheck2,
-}
-
-const facilityIconMap: Record<string, any> = {
-  'basketball': ShoppingBasket,
-  'court': Volleyball,
-  'hall': Landmark,
-  'function': Warehouse,
-  'default': Landmark,
-}
-
-// Color mapping
-const colorClasses = [
-  'bg-purple-100 text-purple-600',
-  'bg-green-100 text-green-600',
-  'bg-red-100 text-red-600',
-  'bg-orange-100 text-orange-600',
-  'bg-indigo-100 text-indigo-600',
-  'bg-pink-100 text-pink-600',
-  'bg-gray-100 text-gray-600',
-  'bg-blue-100 text-blue-800',
-]
 
 const recentUpdates = [
   {
