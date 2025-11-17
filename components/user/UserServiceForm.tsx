@@ -1,11 +1,10 @@
-import { useState } from "react";
-import { allServices } from "../ServicesData";
+'use client'
 
-interface Service {
-  id: number;
-  title: string;
-  requirements: string[];
-}
+import { useState, useEffect } from "react";
+import { getItemById } from "@/app/actions/items";
+import { createRequest } from "@/app/actions/requests";
+import { ItemWithCategory } from "@/lib/database.types";
+import { createClient } from "@/lib/supabase/client";
 
 interface ServiceFormProps {
   service: string | null; 
@@ -13,42 +12,102 @@ interface ServiceFormProps {
 }
 
 export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
-  const serviceData: Service | undefined = allServices.find((s) => s.title === service);
-
+  const [item, setItem] = useState<ItemWithCategory | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ [key: string]: string }>({});
 
-  const handleChange = (req: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [req]: value }));
+  useEffect(() => {
+    async function loadItem() {
+      if (!service) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const itemData = await getItemById(service);
+        setItem(itemData);
+      } catch (error) {
+        console.error('Failed to load item:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadUser() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    }
+
+    loadItem();
+    loadUser();
+  }, [service]);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!serviceData) {
-      alert("Service not found");
+    if (!item || !userId) {
+      alert("Service not found or user not logged in");
       return;
     }
 
-    console.log({
-      serviceTitle: serviceData.title,
-      ...formData,
-    });
-
-    alert("Application submitted!");
-    onNavigate('services'); // go back after submit
+    try {
+      setSubmitting(true);
+      const reason = Object.entries(formData)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+      
+      await createRequest(userId, item.id, reason);
+      alert("Application submitted successfully!");
+      onNavigate('services');
+    } catch (error) {
+      console.error('Failed to submit request:', error);
+      alert("Failed to submit application. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (!serviceData) {
-    return <div>Service not found.</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
+  if (!item) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Service not found.</div>
+      </div>
+    );
+  }
+
+  // Parse booking rules or requirements from the item
+  const requirements = item.booking_rules 
+    ? item.booking_rules.split(',').map(r => r.trim()).filter(Boolean)
+    : ['Name', 'Contact Number', 'Purpose'];
+
   return (
-    <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+    <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow m-5">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
-        {serviceData.title} Application
+        {item.name} Application
       </h2>
 
+      {item.description && (
+        <p className="text-gray-600 mb-4">{item.description}</p>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {serviceData.requirements.map((req, idx) => (
+        {requirements.map((req, idx) => (
           <div key={idx}>
             <label className="block text-sm font-medium text-gray-700">{req}</label>
             <input
@@ -66,15 +125,17 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
             type="button"
             onClick={() => onNavigate('services')}
             className="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-300"
+            disabled={submitting}
           >
             ← Back
           </button>
 
           <button
             type="submit"
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            disabled={submitting}
           >
-            Submit
+            {submitting ? 'Submitting...' : 'Submit'}
           </button>
         </div>
         

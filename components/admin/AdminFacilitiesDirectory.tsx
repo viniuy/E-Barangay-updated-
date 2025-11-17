@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import iconShadowUrl from "leaflet/dist/images/marker-shadow.png";
 import Footer from "../Footer";
 
 interface FacilityDirectoryProps {
@@ -16,12 +14,14 @@ interface FacilityDirectoryProps {
   onSelectFacility: (facility: string) => void;
 }
 
-const DefaultIcon = L.icon({
-  iconUrl,
-  shadowUrl: iconShadowUrl,
-  iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+// Fix for Leaflet default icon in Next.js
+if (typeof window !== 'undefined') {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  });
+}
 
 const facilities = [
   { name: "Barangay Gynmnasium", lat: 14.4140, lng: 120.9705 },

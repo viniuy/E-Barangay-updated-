@@ -1,4 +1,6 @@
-import { useState } from 'react';
+'use client'
+
+import { useState, useMemo, useEffect } from 'react';
 import { Header } from './UserHeader';
 import { Input } from '../ui/input';
 import { Search, Clock } from 'lucide-react';
@@ -7,90 +9,64 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import iconShadowUrl from "leaflet/dist/images/marker-shadow.png";
 import Footer from "../Footer";
+import { useItems, useCategories } from '@/lib/hooks/useItems';
 
 interface FacilityDirectoryProps {
   onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application') => void;
   onSelectFacility: (facility: string) => void;
 }
 
-const DefaultIcon = L.icon({
-  iconUrl,
-  shadowUrl: iconShadowUrl,
-  iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+// Fix for Leaflet default icon in Next.js - moved to useEffect to avoid SSR issues
 
-const facilities = [
-  { name: "Barangay Gynmnasium", lat: 14.4140, lng: 120.9705 },
-  { name: "Barangay Multipurpose Hall", lat: 14.3540, lng: 120.9419 },
-  { name: "Solviento Villas Bacoor Cavite", lat: 14.41, lng: 120.97 },
-];
-
-const allFacilities = [
-  {
-    id: 1,
-    title: 'Barangay Covered Court',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'covered-court',
-    image: '/images/Covered-court.jpeg',
-    processingTime: '1-2 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 2,
-    title: 'Barangay Basketball Court',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'basketball-court',
-    image: '/images/Basketball-court.jpg',
-    processingTime: '1 day',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 3,
-    title: 'Barangay Multipurpose Hall',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'multipurpose-hall',
-    image: '/images/Multipurpose-hall.jpg',
-    processingTime: '2-5 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  },
-  {
-    id: 4,
-    title: 'Barangay Function Room',
-    address: 'General CXJ9+M57, Bacoor Blvd, Bacoor, Cavite, Philippines.',
-    category: 'function-room',
-    image: '/images/Function-room.jpg',
-    processingTime: '3 days',
-    fee: 'PHP 100',
-    requirements: ['Valid ID', 'Accomplished request form', 'Cedula']
-  }
-];
-
-const categories = [
-  { id: 'all', label: 'All Facilities', count: allFacilities.length },
-  { id: 'covered-court', label: 'Covered Court', count: 2 },
-  { id: 'basketball-court', label: 'Basketball Court', count: 1 },
-  { id: 'multipurpose-hall', label: 'Multipurpose Hall', count: 1 },
-  { id: 'function-room', label: 'Function Room', count: 1 }
-];
+// Default coordinates for Bacoor, Cavite
+const defaultLat = 14.41
+const defaultLng = 120.97
 
 export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDirectoryProps) {
+  const { items: facilities, loading } = useItems('facility')
+  const { categories } = useCategories()
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const filteredServices = allFacilities
-    .filter(facility => {
-      const matchesSearch = facility.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           facility.address.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || facility.category === selectedCategory;
+  // Fix for Leaflet default icon in Next.js - only run on client
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+    }
+  }, []);
+
+  const categoryOptions = useMemo(() => {
+    const allOption = { id: 'all', label: 'All Facilities', count: facilities.length }
+    const categoryOptions = categories.map(cat => ({
+      id: cat.id,
+      label: cat.name,
+      count: facilities.filter(f => f.category_id === cat.id).length
+    }))
+    return [allOption, ...categoryOptions]
+  }, [categories, facilities])
+
+  const filteredServices = useMemo(() => {
+    return facilities.filter(facility => {
+      const matchesSearch = facility.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           facility.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           false
+      const matchesCategory = selectedCategory === 'all' || facility.category_id === selectedCategory
       return matchesSearch && matchesCategory
-    });
+    })
+  }, [facilities, searchTerm, selectedCategory])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading facilities...</div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -103,7 +79,7 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
           <h2 className="text-2xl mb-4 flex items-center font-semibold justify-center"> Barangay Facilities</h2>
           <div className="w-[75%] mx-auto h-[300px] rounded-2xl overflow-hidden shadow-xl mb-8 border-1 border-blue-600">
             <MapContainer
-              center={[14.41, 120.97]}
+              center={[defaultLat, defaultLng]}
               zoom={12}
               scrollWheelZoom={false}
               className="h-full w-full"
@@ -113,8 +89,8 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
 
-              {facilities.map((facility, idx) => (
-                <Marker key={idx} position={[facility.lat, facility.lng]}>
+              {facilities.map((facility) => (
+                <Marker key={facility.id} position={[defaultLat, defaultLng]}>
                   <Popup>{facility.name}</Popup>
                 </Marker>
               ))}
@@ -150,7 +126,7 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.label} ({category.count})
                       </SelectItem>
@@ -163,27 +139,33 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
 
           {/* FACILITIES - Card */}
           <div className="space-y-4 grid md:grid-cols-3 gap-4">
-            {filteredServices.map((facilities) => {
+            {filteredServices.map((facility) => {
               return (
-              <div className='w-full max-w-4xl'>
+              <div key={facility.id} className='w-full max-w-4xl'>
                 <Card 
                   className="rounded-lg hover:shadow-lg transition-shadow cursor-pointer max-h-120px flex flex-col"
-                  onClick={() => onSelectFacility(facilities.title)}
+                  onClick={() => onSelectFacility(facility.id)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-4">
                       {/* Image on the left */}
-                      <img
-                        src={facilities.image}
-                        alt={facilities.title}
-                        className="w-48 h-36 object-cover rounded-lg border border-blue-800"
-                      />
+                      {facility.image_url ? (
+                        <img
+                          src={facility.image_url}
+                          alt={facility.name || 'Facility'}
+                          className="w-48 h-36 object-cover rounded-lg border border-blue-800"
+                        />
+                      ) : (
+                        <div className="w-48 h-36 bg-gray-200 rounded-lg border border-blue-800 flex items-center justify-center">
+                          <span className="text-gray-400">No image</span>
+                        </div>
+                      )}
 
                       {/* Text content beside the image */}
                       <div className="flex flex-col justify-center text-left">
-                        <CardTitle className="text-lg font-bold mb-1">{facilities.title}</CardTitle>
+                        <CardTitle className="text-lg font-bold mb-1">{facility.name}</CardTitle>
                         <CardDescription className="text-sm text-gray-600">
-                          {facilities.address}
+                          {facility.description || 'No description available'}
                         </CardDescription>
                       </div>
                     </div>
@@ -191,15 +173,15 @@ export function FacilitiesDirectory({ onNavigate, onSelectFacility }: FacilityDi
 
                   <CardContent className="pt-2">
                     <div className="flex items-center justify-between space-x-3">
-                      {/* Processing Time Box */}
+                      {/* Availability Box */}
                       <div className="flex-1 flex items-center justify-center border border-gray-400 rounded-md px-3 py-2 text-sm text-black">
                         <Clock className="h-4 w-4 mr-1" />
-                        {facilities.processingTime}
+                        {facility.availability || 'N/A'}
                       </div>
 
-                      {/* Fee Box */}
+                      {/* Status Box */}
                       <div className="flex-1 flex items-center justify-center border border-gray-400 rounded-md px-3 py-2 text-sm text-black">
-                        {facilities.fee}
+                        {facility.status}
                       </div>
                     </div>
                   </CardContent>

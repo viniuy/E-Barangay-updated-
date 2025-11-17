@@ -1,9 +1,15 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { Header } from './UserHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Label } from "../ui/label"
 import Footer from "../Footer";
+import { useItems, useCategories } from '@/lib/hooks/useItems';
+import { getStatistics } from '@/app/actions/statistics';
+import { ItemWithCategory } from '@/lib/database.types';
 
 import { 
   Plane, 
@@ -53,110 +59,44 @@ interface Faq1Props {
   items?: FaqItem[];
 }
 
-const serviceCategories = [
-  {
-    id: 'education',
-    title: 'Education Services',
-    description: 'Certificates for school enrollment and scholarship applications',
-    icon: GraduationCap,
-    count: 2,
-    color: 'bg-purple-100 text-purple-600',
-    popular: true
-  },
-  {
-    id: 'travel',
-    title: 'Travel & Immigration',
-    description: 'Residency or identity certificates for passport and travel needs',
-    icon: Plane,
-    count: 2,
-    color: 'bg-green-100 text-green-600',
-    popular: false
-  },
-  {
-    id: 'health',
-    title: 'Health Services',
-    description: 'Health certificates, referrals, and medical assistance endorsements',
-    icon: Heart,
-    count: 3,
-    color: 'bg-red-100 text-red-600',
-    popular: false
-  },
-  {
-    id: 'business',
-    title: 'Business Services',
-    description: 'Business clearances and permit endorsements',
-    icon: Building,
-    count: 2,
-    color: 'bg-orange-100 text-orange-600',
-    popular: false
-  },
-  {
-    id: 'transport',
-    title: 'Transport Services',
-    description: 'Clearances for tricycle permits and local transport needs',
-    icon: Car,
-    count: 2,
-    color: 'bg-indigo-100 text-indigo-600',
-    popular: false
-  },
-  {
-    id: 'social',
-    title: 'Social Services',
-    description: 'Certificates for indigency, senior citizens, and PWDs',
-    icon: Users,
-    count: 4,
-    color: 'bg-pink-100 text-pink-600',
-    popular: false
-  },
-  {
-    id: 'security',
-    title: 'Security Services',
-    description: 'Blotters and protection orders',
-    icon: Shield,
-    count: 4,
-    color: 'bg-gray-100 text-gray-600',
-    popular: false
-  }
-];
+// Icon mapping for categories
+const categoryIcons: Record<string, any> = {
+  'education': GraduationCap,
+  'travel': Plane,
+  'health': Heart,
+  'business': Building,
+  'transport': Car,
+  'social': Users,
+  'security': Shield,
+  'default': FileCheck2
+}
 
-const facilityReservation = [
-  {
-    id: 'basketball',
-    title: 'Basketball Court',
-    description: 'A fully equipped court for basketball games and sports activities.',
-    icon: ShoppingBasket,
-    count: 4,
-    color: 'bg-orange-100 text-orange-600',
-    popular: true
-  },
-  {
-    id: 'coveredCourt',
-    title: 'Covered Court',
-    description: 'Outdoor sports area protected from weather, perfect for games and events.',
-    icon: Volleyball,
-    count: 3,
-    color: 'bg-blue-100 text-blue-800',
-    popular: true
-  },
-  {
-    id: 'halls',
-    title: 'Multipurpose Hall',
-    description: 'A versatile space for events, meetings, and community activities.',
-    icon: Landmark,
-    count: 2,
-    color: 'bg-pink-100 text-pink-600',
-    popular: false
-  },
-  {
-    id: 'function',
-    title: 'Function Room',
-    description: 'Private rooms ideal for seminars, workshops, and small gatherings.',
-    icon: Warehouse,
-    count: 1,
-    color: 'bg-purple-100 text-purple-600',
-    popular: false
-  }
-]
+const categoryColors: Record<string, string> = {
+  'education': 'bg-purple-100 text-purple-600',
+  'travel': 'bg-green-100 text-green-600',
+  'health': 'bg-red-100 text-red-600',
+  'business': 'bg-orange-100 text-orange-600',
+  'transport': 'bg-indigo-100 text-indigo-600',
+  'social': 'bg-pink-100 text-pink-600',
+  'security': 'bg-gray-100 text-gray-600',
+  'default': 'bg-blue-100 text-blue-600'
+}
+
+const facilityIcons: Record<string, any> = {
+  'basketball': ShoppingBasket,
+  'covered-court': Volleyball,
+  'multipurpose-hall': Landmark,
+  'function-room': Warehouse,
+  'default': Warehouse
+}
+
+const facilityColors: Record<string, string> = {
+  'basketball': 'bg-orange-100 text-orange-600',
+  'covered-court': 'bg-blue-100 text-blue-800',
+  'multipurpose-hall': 'bg-pink-100 text-pink-600',
+  'function-room': 'bg-purple-100 text-purple-600',
+  'default': 'bg-gray-100 text-gray-600'
+}
 
 const recentUpdates = [
   {
@@ -231,6 +171,73 @@ const Faq1 = ({
 };
 
 export function MainDashboard({ onNavigate }: MainDashboardProps) {
+  const { items: services, loading: servicesLoading } = useItems('service')
+  const { items: facilities, loading: facilitiesLoading } = useItems('facility')
+  const { categories, loading: categoriesLoading } = useCategories()
+  const [stats, setStats] = useState({ totalServices: 0, totalFacilities: 0, totalRequests: 0 })
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const statistics = await getStatistics()
+        setStats({
+          totalServices: statistics.totalServices,
+          totalFacilities: statistics.totalFacilities,
+          totalRequests: statistics.totalRequests
+        })
+      } catch (error) {
+        console.error('Failed to load statistics:', error)
+      }
+    }
+    loadStats()
+  }, [])
+
+  // Group services by category
+  const serviceCategories = categories
+    .map(category => {
+      const categoryServices = services.filter(s => s.category_id === category.id)
+      if (categoryServices.length === 0) return null
+      
+      const categoryName = category.name.toLowerCase()
+      return {
+        id: category.id,
+        title: category.name,
+        description: category.description || '',
+        icon: categoryIcons[categoryName] || categoryIcons.default,
+        count: categoryServices.length,
+        color: categoryColors[categoryName] || categoryColors.default,
+        popular: categoryServices.length >= 3
+      }
+    })
+    .filter(Boolean) as any[]
+
+  // Group facilities by category/type
+  const facilityReservation = categories
+    .map(category => {
+      const categoryFacilities = facilities.filter(f => f.category_id === category.id)
+      if (categoryFacilities.length === 0) return null
+      
+      const categoryName = category.name.toLowerCase().replace(/\s+/g, '-')
+      return {
+        id: category.id,
+        title: category.name,
+        description: category.description || '',
+        icon: facilityIcons[categoryName] || facilityIcons.default,
+        count: categoryFacilities.length,
+        color: facilityColors[categoryName] || facilityColors.default,
+        popular: categoryFacilities.length >= 2
+      }
+    })
+    .filter(Boolean) as any[]
+
+  if (servicesLoading || facilitiesLoading || categoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-200 p-6 rounded-lg m-5">
@@ -435,11 +442,15 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Services</span>
-                    <span className="font-semibold">15</span>
+                    <span className="font-semibold">{stats.totalServices}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Avg. Processing</span>
-                    <span className="font-semibold">2.5 days</span>
+                    <span className="text-sm">Total Facilities</span>
+                    <span className="font-semibold">{stats.totalFacilities}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total Requests</span>
+                    <span className="font-semibold">{stats.totalRequests}</span>
                   </div>
                 </CardContent>
               </Card>

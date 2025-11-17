@@ -8,6 +8,7 @@ A comprehensive online government service portal with modern UI design, accessib
 - 🌐 **Multi-language Support** - English, Sinhala, and Tamil
 - 📱 **Responsive Design** - Works on all devices
 - ♿ **Accessible** - Built with accessibility in mind
+- 🔐 **Supabase Integration** - Secure backend with Row Level Security (RLS)
 
 ## Getting Started
 
@@ -15,20 +16,36 @@ A comprehensive online government service portal with modern UI design, accessib
 
 - Node.js (v18 or higher)
 - npm or yarn
+- A Supabase account and project (for backend functionality)
 
 ### Installation
 
-1. Install dependencies:
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd E-Barangay-updated-
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Start the development server:
+3. Set up environment variables:
+   - Copy `.env.local.example` to `.env.local`
+   - Fill in your Supabase credentials:
+     ```env
+     NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+     ```
+   - You can find these values in your Supabase project settings: https://app.supabase.com/project/_/settings/api
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-3. Open your browser and navigate to:
+5. Open your browser and navigate to:
 ```
 http://localhost:3000
 ```
@@ -39,35 +56,109 @@ http://localhost:3000
 npm run build
 ```
 
-### Preview Production Build
+### Start Production Server
 
 ```bash
-npm run preview
+npm start
 ```
 
 ## Project Structure
 
 ```
-├── App.tsx                      # Main application with routing
+├── app/                         # Next.js App Router directory
+│   ├── layout.tsx              # Root layout component
+│   ├── page.tsx                # Home page
+│   └── middleware.ts           # Supabase auth middleware
 ├── components/
-│   ├── Header.tsx              # Navigation header
-│   ├── MainDashboard.tsx       # Dashboard with service categories
-│   ├── ServiceDirectory.tsx    # Service listing with filters
-│   ├── ServiceApplication.tsx  # Multi-step application form
+│   ├── admin/                  # Admin components
+│   ├── user/                   # User-facing components
 │   └── ui/                     # Reusable UI components (shadcn/ui)
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts           # Client-side Supabase client
+│   │   └── server.ts           # Server-side Supabase client
+│   └── utils.ts                # Utility functions
 ├── styles/
-│   └── globals.css            # Tailwind CSS configuration
-└── main.tsx                    # Application entry point
+│   └── global.css              # Tailwind CSS configuration
+└── public/                     # Static assets
 ```
 
 ## Technologies Used
 
+- **Next.js 14** - React framework with App Router
 - **React 18** - UI framework
 - **TypeScript** - Type safety
 - **Tailwind CSS v4** - Styling
-- **Vite** - Build tool
+- **Supabase** - Backend as a service (database, auth, storage)
 - **shadcn/ui** - UI component library
 - **Lucide React** - Icons
+
+## Deployment on Vercel
+
+This project is optimized for deployment on Vercel. Follow these steps:
+
+### 1. Push to GitHub
+
+```bash
+git add .
+git commit -m "Prepare for deployment"
+git push origin main
+```
+
+### 2. Deploy on Vercel
+
+1. Go to [Vercel](https://vercel.com) and sign in
+2. Click "Add New Project"
+3. Import your GitHub repository
+4. Configure environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+5. Click "Deploy"
+
+### 3. Post-Deployment
+
+- Your app will be live at `https://your-project.vercel.app`
+- Vercel automatically handles:
+  - Build optimization
+  - Serverless functions
+  - Edge network distribution
+  - Automatic HTTPS
+
+### Environment Variables on Vercel
+
+Make sure to add your environment variables in the Vercel dashboard:
+- Go to your project settings
+- Navigate to "Environment Variables"
+- Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+## Supabase Setup
+
+### Security Best Practices
+
+- **Row Level Security (RLS)**: Always enable RLS on your Supabase tables
+- **Client vs Server**: 
+  - Use `lib/supabase/client.ts` for client components (browser)
+  - Use `lib/supabase/server.ts` for server components and API routes
+- **Never expose service role key**: The service role key should only be used in secure server-side contexts
+
+### Using Supabase in Your Components
+
+**Client Components:**
+```typescript
+'use client'
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
+// Use supabase client here
+```
+
+**Server Components:**
+```typescript
+import { createClient } from '@/lib/supabase/server'
+
+const supabase = await createClient()
+// Use supabase client here
+```
 
 ## License
 

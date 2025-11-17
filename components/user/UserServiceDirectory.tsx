@@ -1,10 +1,14 @@
-import { useState } from 'react';
+'use client'
+
+import { useState, useMemo } from 'react';
 import { Header } from './UserHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { allServices } from "../ServicesData";
+import { useItems, useCategories } from '@/lib/hooks/useItems';
+import { ItemWithCategory } from '@/lib/database.types';
+import { FileCheck, Building, Hammer, Home, Users, HeartPulseIcon, Car, Hospital, Accessibility, User, Shield, Lock } from "lucide-react";
 
 import { 
   Search, 
@@ -29,44 +33,72 @@ interface ServiceDirectoryProps {
   onSelectService: (service: string) => void;
 }
 
-const categories = [
-  { id: 'all', label: 'All Services', count: allServices.length },
-  { id: 'permits', label: 'Permits & Licenses', count: 2 },
-  { id: 'travel', label: 'Travel & Immigration', count: 1 },
-  { id: 'business', label: 'Business Services', count: 1 },
-  { id: 'transport', label: 'Transport', count: 1 },
-  { id: 'education', label: 'Education', count: 0 },
-  { id: 'health', label: 'Health Services', count: 2 },
-  { id: 'social', label: 'Social Services', count: 3 },
-  { id: 'security', label: 'Security Services', count: 2 }
-];
+const iconMap: Record<string, any> = {
+  'default': FileCheck,
+  'clearance': FileCheck,
+  'permit': Building,
+  'construction': Hammer,
+  'residency': Home,
+  'indigency': Users,
+  'health': HeartPulseIcon,
+  'tricycle': Car,
+  'referral': Hospital,
+  'senior': Accessibility,
+  'solo': User,
+  'blotter': Shield,
+  'protection': Lock,
+}
 
 export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirectoryProps) {
+  const { items: services, loading } = useItems('service')
+  const { categories } = useCategories()
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('popularity');
+  const [sortBy, setSortBy] = useState('alphabetical');
 
-  const filteredServices = allServices
-    .filter(service => {
-      const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           service.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+  const categoryOptions = useMemo(() => {
+    const allOption = { id: 'all', label: 'All Services', count: services.length }
+    const categoryOptions = categories.map(cat => ({
+      id: cat.id,
+      label: cat.name,
+      count: services.filter(s => s.category_id === cat.id).length
+    }))
+    return [allOption, ...categoryOptions]
+  }, [categories, services])
+
+  const filteredServices = useMemo(() => {
+    let filtered = services.filter(service => {
+      const matchesSearch = service.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           service.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           false
+      const matchesCategory = selectedCategory === 'all' || service.category_id === selectedCategory
+      return matchesSearch && matchesCategory
     })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'popularity':
-          return b.popularity - a.popularity;
-        case 'alphabetical':
-          return a.title.localeCompare(b.title);
-        case 'processing':
-          return a.processingTime.localeCompare(b.processingTime);
-        default:
-          return 0;
-      }
-    });
 
-  const featuredServices = allServices.filter(service => service.featured);
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'alphabetical':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'category':
+          return (a.category?.name || '').localeCompare(b.category?.name || '')
+        default:
+          return 0
+      }
+    })
+
+    return filtered
+  }, [services, searchTerm, selectedCategory, sortBy])
+
+  const featuredServices = filteredServices.slice(0, 6) // Show first 6 as featured
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading services...</div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -85,7 +117,8 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
               <Carousel className="w-full max-w-4xl">
                 <CarouselContent className="px-2">
                   {featuredServices.map((service) => {
-                    const IconComponent = service.icon;
+                    const iconName = service.name?.toLowerCase().split(' ')[0] || 'default'
+                    const IconComponent = iconMap[iconName] || iconMap.default
                     return (
                       <CarouselItem 
                         key={service.id} 
@@ -93,7 +126,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                       >
                         <Card 
                           className="border-2 border-blue-300 rounded-lg hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col"
-                          onClick={() => onSelectService(service.title)}
+                          onClick={() => onSelectService(service.id)}
                         >
                           <CardHeader className="pb-3 text-center">
                             <div className="flex justify-center">
@@ -101,21 +134,21 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                                 <IconComponent className="h-7 w-7 bg-white text-blue-800 rounded-lg" />
                               </div>
                             </div>
-                            <CardTitle className="text-lg mt-2">{service.title}</CardTitle>
-                            <CardDescription className="text-sm">{service.description}</CardDescription>
+                            <CardTitle className="text-lg mt-2">{service.name}</CardTitle>
+                            <CardDescription className="text-sm">{service.description || ''}</CardDescription>
                           </CardHeader>
                         
                           <CardContent className="pt-0 mt-auto">
                             <div className="flex items-center justify-between space-x-3">
-                              {/* Processing Time Box */}
+                              {/* Availability Box */}
                               <div className="flex-1 flex items-center justify-center border-1 border-gray-400 rounded-md px-3 py-2 text-sm text-black">
                                 <Clock className="h-4 w-4 mr-1" />
-                                {service.processingTime}
+                                {service.availability || 'N/A'}
                               </div>
 
-                              {/* Fee Box */}
+                              {/* Status Box */}
                               <div className="flex-1 flex items-center justify-center border-1 border-gray-400 rounded-md px-3 py-2 text-sm text-black">
-                                {service.fee}
+                                {service.status}
                               </div>
                             </div>
                           </CardContent>
@@ -158,7 +191,7 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {categoryOptions.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.label} ({category.count})
                       </SelectItem>
@@ -174,9 +207,8 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popularity">Most Popular</SelectItem>
                     <SelectItem value="alphabetical">A-Z</SelectItem>
-                    <SelectItem value="processing">Processing Time</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -185,12 +217,13 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
             {/* SERVICES - Card */}
             <div className="space-y-4">
               {filteredServices.map((service) => {
-                const IconComponent = service.icon;
+                const iconName = service.name?.toLowerCase().split(' ')[0] || 'default'
+                const IconComponent = iconMap[iconName] || iconMap.default
                 return (
                 <Card
                   key={service.id}
                   className="hover:shadow-md transition-shadow cursor-pointer border-r-5 border-r-blue-700"
-                  onClick={() => onSelectService(service.title)}
+                  onClick={() => onSelectService(service.id)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
@@ -205,42 +238,43 @@ export function ServiceDirectory({ onNavigate, onSelectService }: ServiceDirecto
                         {/* Title + Info */}
                         <div className="flex-1">
                           {/* Title */}
-                          <h3 className="text-lg font-semibold mb-1">{service.title}</h3>
+                          <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
 
                           {/* Description */}
-                          <p className="text-gray-600 mb-3">{service.description}</p>
+                          <p className="text-gray-600 mb-3">{service.description || ''}</p>
 
                           {/* Badges + Processing inline */}
                           <div className="flex items-center space-x-3 mb-4">
                             <div className="flex items-center text-sm text-gray-700">
                               <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                              <span>{service.processingTime}</span>
+                              <span>{service.availability || 'N/A'}</span>
                             </div>
-                            {service.featured && (
-                              <Badge className="bg-yellow-200 text-yellow-800 flex items-center">
-                                <Star className="h-3 w-3 mr-1" />
-                                Featured
+                            {service.category && (
+                              <Badge variant="secondary">
+                                {service.category.name}
                               </Badge>
                             )}
                             <Badge
-                              variant={service.availability === "24/7" ? "default" : "secondary"}
+                              variant={service.status === "available" ? "default" : "secondary"}
                             >
-                              {service.availability}
+                              {service.status}
                             </Badge>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right: Fee + Requirements stacked */}
+                      {/* Right: Category + Type stacked */}
                       <div className="flex flex-col space-y-2 text-sm text-gray-700 ml-6 w-40">
                         <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>Fee: {service.fee}</span>
+                          <span>Type: {service.type || 'N/A'}</span>
                         </div>
-                        <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
-                          <FileText className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>{service.requirements.length} requirements</span>
-                        </div>
+                        {service.booking_rules && (
+                          <div className="flex items-center justify-center border border-gray-300 rounded-md px-2 py-1 bg-white">
+                            <FileText className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>Rules available</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
