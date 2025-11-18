@@ -40,14 +40,15 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
         onOpenChange(false)
         setEmail('')
         setPassword('')
-        
-        // Redirect based on role
-        if (result.role === 'staff') {
-          router.push('/admin')
-        } else {
-          router.push('/')
+
+        setTimeout(() => {
+          if (result.role === 'staff') {
+            router.push('/admin')
+          } else {
+            router.push('/')
+          }
           router.refresh()
-        }
+        }, 100)
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')

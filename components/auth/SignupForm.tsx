@@ -35,7 +35,7 @@ export function SignupForm({ open, onOpenChange, onSwitchToLogin }: SignupFormPr
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success('Account created successfully!')
+        toast.success('Account created successfully! Please Log in.')
         onOpenChange(false)
         setEmail('')
         setPassword('')

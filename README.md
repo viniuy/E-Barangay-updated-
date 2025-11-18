@@ -66,7 +66,7 @@ npm run prisma:studio
 5. Start the development server:
 ```bash
 npm run dev
-```
+
 
 6. Open your browser and navigate to:
 ```
