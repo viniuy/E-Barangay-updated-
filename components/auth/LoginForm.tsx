@@ -41,13 +41,16 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
         setEmail('')
         setPassword('')
 
+        // Set flag to show loading screen after reload
+        sessionStorage.setItem('isPostLogin', 'true')
+        
+        // Reload the page to ensure fresh auth state
         setTimeout(() => {
           if (result.role === 'staff') {
-            router.push('/admin')
+            window.location.href = '/admin'
           } else {
-            router.push('/')
+            window.location.href = '/'
           }
-          router.refresh()
         }, 100)
       }
     } catch (error) {

@@ -8,8 +8,6 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useItems, useCategories } from '@/lib/hooks/useItems';
-import axiosInstance from '@/lib/axios'
-import { useRouter } from 'next/navigation'
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
 import Footer from "../Footer";
@@ -24,7 +22,7 @@ export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDire
   const { categories } = useCategories()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const router = useRouter()
+
   // Fix for Leaflet default icon in Next.js
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -35,15 +33,6 @@ export function FacilityDirectory({ onNavigate, onSelectFacility }: FacilityDire
       });
     }
   }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await axiosInstance.post('/auth/logout')
-      router.refresh()
-    } catch (error) {
-      console.error('Failed to log out:', error)
-    }
-  }
 
   const categoryOptions = [
     { id: 'all', label: 'All Facilities', count: facilities.length },
