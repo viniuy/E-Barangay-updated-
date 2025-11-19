@@ -36,23 +36,22 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
       if (result.error) {
         toast.error(result.error)
       } else {
-        // Set flag to show loading screen after reload (before closing dialog)
-        sessionStorage.setItem('isPostLogin', 'true')
-        
-        // Close dialog and reload immediately
+        toast.success('Logged in successfully!')
         onOpenChange(false)
         setEmail('')
         setPassword('')
+
+        // Set flag to show loading screen after reload
+        sessionStorage.setItem('isPostLogin', 'true')
         
         // Reload the page to ensure fresh auth state
-        // Use a small delay to ensure sessionStorage is set
         setTimeout(() => {
           if (result.role === 'staff') {
             window.location.href = '/admin'
           } else {
             window.location.href = '/'
           }
-        }, 50)
+        }, 100)
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')

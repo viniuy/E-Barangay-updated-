@@ -20,31 +20,22 @@ type View = 'dashboard' | 'services' | 'facilities' | 'application' | 'requests'
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [selectedService, setSelectedService] = useState<string | null>(null)
-  // Check if we're in post-login mode - if so, don't show initial loading
-  const isPostLogin = typeof window !== 'undefined' && sessionStorage.getItem('isPostLogin')
-  const [loading, setLoading] = useState(!isPostLogin) // Only show initial loading if not post-login
+  const [loading, setLoading] = useState(true)
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    // If we're in post-login mode, we only wait for authLoading
-    if (isPostLogin) {
-      if (!authLoading) {
-        setLoading(false)
-        // Clear post-login flag once auth is loaded
-        sessionStorage.removeItem('isPostLogin')
-      }
-      return
-    }
-    
-    // Normal loading flow
     if (authLoading) return
     if (user?.role === 'staff') {
       router.push('/admin')
       return
     }
     setLoading(false)
-  }, [authLoading, user, router, isPostLogin])
+    // Clear post-login flag once auth is loaded
+    if (sessionStorage.getItem('isPostLogin')) {
+      sessionStorage.removeItem('isPostLogin')
+    }
+  }, [authLoading, user, router])
 
   const renderView = () => {
     switch (currentView) {
@@ -96,32 +87,20 @@ export default function Home() {
     }
   }
 
-  // Show post-login loading screen if in post-login mode
-  if (isPostLogin && (loading || authLoading)) {
+  if (loading || authLoading) {
+    const isPostLogin = typeof window !== 'undefined' && sessionStorage.getItem('isPostLogin')
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-200 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
           <p className="mt-6 text-lg font-medium text-gray-900">
-            Logging you in...
+            {isPostLogin ? 'Logging you in...' : 'Loading...'}
           </p>
-          <p className="mt-2 text-sm text-gray-600">
-            Please wait while we update your session
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show regular loading screen only if not in post-login mode
-  if ((loading || authLoading) && !isPostLogin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-6 text-lg font-medium text-gray-900">
-            Loading...
-          </p>
+          {isPostLogin && (
+            <p className="mt-2 text-sm text-gray-600">
+              Please wait while we update your session
+            </p>
+          )}
         </div>
       </div>
     )
