@@ -7,7 +7,6 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useItems, useCategories } from '@/lib/hooks/useItems';
-import { ItemWithCategory } from '@/lib/database.types';
 import { FileCheck, Building, Hammer, Home, Users, HeartPulseIcon, Car, Hospital, Accessibility, User, Shield, Lock } from "lucide-react";
 
 import { 
