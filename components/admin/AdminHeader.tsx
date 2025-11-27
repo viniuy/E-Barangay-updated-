@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuSeparator,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useState } from 'react';
 
 interface HeaderProps {
   onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
@@ -17,15 +19,23 @@ interface HeaderProps {
 
 export function Header({ onNavigate }: HeaderProps) {
   const router = useRouter()
+  const [logoutLoading, setLogoutLoading] = useState(false)
 
   const handleSignOut = async () => {
     try {
+      setLogoutLoading(true) // SHOW LOADING OVERLAY
       await axiosInstance.post('/auth/logout')
-      router.refresh()
+
+      setTimeout(() => {
+        window.location.reload() // HARD RELOAD
+      }, 1200)
+      
     } catch (error) {
       console.error('Failed to log out:', error)
+      setLogoutLoading(false)
     }
   }
+
   return (
 
     <div className="max-w-4xl mx-auto px-6">
@@ -52,7 +62,7 @@ export function Header({ onNavigate }: HeaderProps) {
             onClick={() => onNavigate('directory')}
             className="hover:text-blue-600"
           >
-            Directory
+            Edit
           </button>
           <button 
             onClick={() => onNavigate('requests')}
@@ -65,11 +75,6 @@ export function Header({ onNavigate }: HeaderProps) {
         {/* Right Side Buttons */}
         <div className="flex items-center space-x-3">
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="outline"> 
-                <h1>Log in</h1>
-              </Button>
-            </DropdownMenuTrigger>
             <DropdownMenuContent className="w-30" align="start">
               <DropdownMenuLabel>Sign in</DropdownMenuLabel>
               <DropdownMenuLabel>Log in</DropdownMenuLabel>
@@ -83,9 +88,8 @@ export function Header({ onNavigate }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="start">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem> View All Requests </DropdownMenuItem>
-                <DropdownMenuItem> Settings </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}> Log Out </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

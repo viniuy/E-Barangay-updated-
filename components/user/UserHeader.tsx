@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, Landmark, User } from 'lucide-react';
+import { Landmark, User } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/lib/hooks/useAuth'
 import { LoginForm } from '@/components/auth/LoginForm'
@@ -25,7 +25,6 @@ interface HeaderProps {
 
 export function Header({ onNavigate }: HeaderProps) {
   const { user, loading } = useAuth()
-  const router = useRouter()
   const [loginOpen, setLoginOpen] = useState(false)
   const [signupOpen, setSignupOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
