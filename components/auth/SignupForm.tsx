@@ -11,6 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select"
+
 import { signUp } from '@/app/actions/auth'
 import { toast } from 'sonner'
 
@@ -20,28 +28,32 @@ interface SignupFormProps {
   onSwitchToLogin: () => void
 }
 
-export function SignupForm({ open, onOpenChange, onSwitchToLogin }: SignupFormProps) {
+export function SignupForm({ open, onOpenChange, onSwitchToLogin } : SignupFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
+  const [barangay, setBarangay] = useState('Molino I')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const result = await signUp(email, password, username)
+      const result = await signUp(email, password, username, barangay)
+
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success('Account created successfully! Please Log in.')
+        toast.success('Account created successfully!')
         onOpenChange(false)
+
         setEmail('')
         setPassword('')
         setUsername('')
+        setBarangay('Molino I')
       }
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -53,65 +65,83 @@ export function SignupForm({ open, onOpenChange, onSwitchToLogin }: SignupFormPr
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Sign Up</DialogTitle>
-          <DialogDescription>
-            Create a new account to access E-Barangay services
-          </DialogDescription>
+          <DialogDescription>Create a new account to access E-Barangay services</DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          <div className="space-y-2">
+            <Label>Barangay</Label>
+
+            <Select
+              value={barangay}
+              onValueChange={(value) => setBarangay(value)}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select barangay" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="Molino I">Molino I</SelectItem>
+                <SelectItem value="Molino II">Molino II</SelectItem>
+                <SelectItem value="Molino III">Molino III</SelectItem>
+                <SelectItem value="Molino IV">Molino IV</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               type="text"
-              placeholder="johndoe"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={loading}
+              placeholder="johndoe"
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
               disabled={loading}
             />
-            <p className="text-xs text-gray-500">Must be at least 6 characters</p>
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Sign Up'}
+
+          <Button disabled={loading} type="submit" className="w-full">
+            {loading ? 'Creating account…' : 'Sign Up'}
           </Button>
+
           <div className="text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="text-blue-600 hover:underline"
-            >
-              Log in
+            <span>Already have an account? </span>
+            <button type="button" onClick={onSwitchToLogin} className="text-blue-600 hover:underline">
+              Log In
             </button>
           </div>
+
         </form>
       </DialogContent>
     </Dialog>
   )
 }
-
