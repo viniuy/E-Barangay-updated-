@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import bcrypt from 'bcryptjs'
-import { createSession, getSession, deleteSession } from '@/lib/auth/session'
+import { createSession as createSessionBase, getSession as getSessionBase, deleteSession as deleteSessionBase } from '@/lib/auth/session'
 import { randomUUID } from 'crypto'
 import { Barangay } from '@prisma/client'
 
@@ -16,29 +16,38 @@ const barangayMap = {
   "Molino IV": "Molino_IV",
 } as const
 
-// ==========================
-// SIGN UP
-// ==========================
+export type BarangayKey = keyof typeof barangayMap // "Molino I" | "Molino II" | "Molino III" | "Molino IV"
+
+// -----------------
+// Session User type
+// -----------------
+export type SessionUser = {
+  id: string
+  email: string
+  username: string
+  role: string
+  barangay: Barangay
+}
+
+// -----------------
+// Sign up
+// -----------------
 export async function signUp(
   email: string,
   password: string,
   username: string,
-  barangay: string
+  barangay: BarangayKey
 ) {
   const existingUser = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { email },
-        { username },
-      ],
-    },
+    where: { OR: [{ email }, { username }] },
   })
 
-  if (existingUser) {
-    return { error: 'User with this email or username already exists' }
-  }
+  if (existingUser) return { error: 'User with this email or username already exists' }
 
   const hashedPassword = await bcrypt.hash(password, 10)
+
+  const prismaBarangay = barangayMap[barangay]
+  if (!prismaBarangay) return { error: `Invalid barangay: ${barangay}` }
 
   try {
     const user = await prisma.user.create({
@@ -48,94 +57,81 @@ export async function signUp(
         username,
         password: hashedPassword,
         userRole: 'resident',
-
-        // ⭐ Convert to Prisma Enum
-        barangay: barangayMap[barangay] as Barangay,
-
+        barangay: prismaBarangay as Barangay,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     })
 
-    await createSession(user.id)
+    // ✅ Only pass userId to session
+    await createSessionBase(user.id)
 
     revalidatePath('/')
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        barangay: user.barangay,
-      }
-    }
+    return { user }
   } catch (dbError: any) {
     console.error('Error creating user:', dbError)
     return { error: 'Failed to create user. Please try again.' }
   }
 }
 
-// ==========================
-// SIGN IN
-// ==========================
+// -----------------
+// Sign in
+// -----------------
 export async function signIn(email: string, password: string) {
   const user = await prisma.user.findUnique({
     where: { email },
+    select: { id: true, email: true, username: true, password: true, userRole: true, barangay: true },
+  })
+
+  if (!user) return { error: 'Invalid email or password' }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+  if (!isPasswordValid) return { error: 'Invalid email or password' }
+
+  await createSessionBase(user.id) // ✅ only userId
+
+  revalidatePath('/')
+  return {
+    user,
+    role: user.userRole || 'resident',
+  }
+}
+
+// -----------------
+// Get current user
+// -----------------
+export async function getCurrentUser(): Promise<SessionUser | null> {
+  const session = await getSessionBase()
+  if (!session) return null
+
+  // Fetch full user from DB
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id }, // session stores a user object with an id
     select: {
       id: true,
       email: true,
       username: true,
-      password: true,
       userRole: true,
       barangay: true,
     },
   })
 
-  if (!user) {
-    return { error: 'Invalid email or password' }
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user.password)
-  if (!isPasswordValid) {
-    return { error: 'Invalid email or password' }
-  }
-
-  await createSession(user.id)
-  revalidatePath('/')
+  if (!user) return null
 
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      barangay: user.barangay,
-    },
-    role: user.userRole || 'resident'
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    barangay: user.barangay,
+    role: user.userRole || 'resident',
   }
 }
 
-// ==========================
-// SIGN OUT
-// ==========================
+// -----------------
+// Sign out
+// -----------------
 export async function signOut() {
-  await deleteSession()
+  await deleteSessionBase()
   revalidatePath('/')
   redirect('/')
-}
-
-// ==========================
-// GET CURRENT USER
-// ==========================
-export async function getCurrentUser() {
-  const session = await getSession()
-
-  if (!session) return null
-
-  return {
-    id: session.user.id,
-    email: session.user.email,
-    username: session.user.username,
-    barangay: session.user.barangay,
-    role: session.user.role || 'resident',
-  }
 }

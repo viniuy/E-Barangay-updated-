@@ -22,17 +22,21 @@ import {
 import { signUp } from '@/app/actions/auth'
 import { toast } from 'sonner'
 
+// List of allowed barangays
+const barangays = ["Molino I", "Molino II", "Molino III", "Molino IV"] as const
+type BarangayKey = (typeof barangays)[number] // "Molino I" | "Molino II" | "Molino III" | "Molino IV"
+
 interface SignupFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSwitchToLogin: () => void
 }
 
-export function SignupForm({ open, onOpenChange, onSwitchToLogin } : SignupFormProps) {
+export function SignupForm({ open, onOpenChange, onSwitchToLogin }: SignupFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
-  const [barangay, setBarangay] = useState('Molino I')
+  const [barangay, setBarangay] = useState<BarangayKey>('Molino I')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -75,7 +79,7 @@ export function SignupForm({ open, onOpenChange, onSwitchToLogin } : SignupFormP
 
             <Select
               value={barangay}
-              onValueChange={(value) => setBarangay(value)}
+              onValueChange={(value: BarangayKey) => setBarangay(value)}
               disabled={loading}
             >
               <SelectTrigger className="w-full">
@@ -83,10 +87,9 @@ export function SignupForm({ open, onOpenChange, onSwitchToLogin } : SignupFormP
               </SelectTrigger>
 
               <SelectContent>
-                <SelectItem value="Molino I">Molino I</SelectItem>
-                <SelectItem value="Molino II">Molino II</SelectItem>
-                <SelectItem value="Molino III">Molino III</SelectItem>
-                <SelectItem value="Molino IV">Molino IV</SelectItem>
+                {barangays.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -135,7 +138,11 @@ export function SignupForm({ open, onOpenChange, onSwitchToLogin } : SignupFormP
 
           <div className="text-center text-sm">
             <span>Already have an account? </span>
-            <button type="button" onClick={onSwitchToLogin} className="text-blue-600 hover:underline">
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-blue-600 hover:underline"
+            >
               Log In
             </button>
           </div>
