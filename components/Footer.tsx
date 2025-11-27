@@ -6,7 +6,7 @@ export default function Footer() {
         {/* Top Links */}
         <div className="flex flex-wrap justify-center gap-6 text-xl text-black">
           <a href="#" className="hover:text-gray-300 transition-colors">
-            Product
+            Services
           </a>
           <a href="#" className="hover:text-gray-300 transition-colors">
             About Us
@@ -31,7 +31,7 @@ export default function Footer() {
             LinkedIn ↗
           </a>
         </div>
-asdasdasdsadsa
+
         {/* Privacy Policy */}
         <p className="text-xs text-gray-400">Computer Science Privacy Policy</p>
       </div>

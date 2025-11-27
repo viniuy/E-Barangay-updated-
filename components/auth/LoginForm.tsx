@@ -37,7 +37,6 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success('Logged in successfully!')
         setEmail('')
         setPassword('')
         setShowLoadingScreen(true)

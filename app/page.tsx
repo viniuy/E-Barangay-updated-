@@ -7,6 +7,7 @@ import { MainDashboard } from '@/components/user/UserMainDashboard'
 import { ServiceDirectory } from '@/components/user/UserServiceDirectory'
 import { ServiceForm } from '@/components/user/UserServiceForm'
 import { UserRequests } from '@/components/user/UserRequests'
+import GuestMainDashboard from '@/components/GuestLanding' // Import your new guest dashboard
 import { useAuth } from '@/lib/hooks/useAuth'
 
 // Dynamically import FacilitiesDirectory to avoid SSR issues with Leaflet
@@ -107,6 +108,10 @@ export default function Home() {
     // If not post-login, do nothing (no loading screen) - proceed to render the rest of the component
   }
 
+  // Show Guest Dashboard if user is not authenticated
+  if (!user && !authLoading) {
+    return <GuestMainDashboard />
+  }
+
   return <div className="min-h-screen bg-background">{renderView()}</div>
 }
-
