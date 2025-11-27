@@ -31,7 +31,7 @@ export default function Footer() {
             LinkedIn ↗
           </a>
         </div>
-
+asdasdasdsadsa
         {/* Privacy Policy */}
         <p className="text-xs text-gray-400">Computer Science Privacy Policy</p>
       </div>
