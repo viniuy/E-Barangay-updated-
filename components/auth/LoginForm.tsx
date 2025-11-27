@@ -39,6 +39,8 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
       } else {
         setEmail('')
         setPassword('')
+
+        // show full-screen loading overlay
         setShowLoadingScreen(true)
 
         const targetUrl = result.role === 'staff' ? '/admin' : '/'
@@ -54,66 +56,68 @@ export function LoginForm({ open, onOpenChange, onSwitchToSignup }: LoginFormPro
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        {showLoadingScreen ? (
-          <div className="flex flex-col items-center justify-center space-y-4 py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-lg font-medium">Logging you in...</p>
-            <p className="text-sm text-gray-600">Please wait while we redirect you.</p>
-          </div>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Log In</DialogTitle>
-              <DialogDescription>
-                Enter your credentials to access your account
-              </DialogDescription>
-            </DialogHeader>
+    <>
+      {/* FULLSCREEN LOADING SCREEN */}
+      {showLoadingScreen && (
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-[9999] animate-fadeIn">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-lg font-medium text-gray-700">Logging in...</p>
+          <p className="text-sm text-gray-500">Please wait while we redirect you.</p>
+        </div>
+      )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+      {/* LOGIN MODAL */}
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Log In</DialogTitle>
+            <DialogDescription>
+              Enter your credentials to access your account
+            </DialogDescription>
+          </DialogHeader>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-              <Button type="submit" className="w-full">
-                Log In
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Don't have an account? </span>
-                <button
-                  type="button"
-                  onClick={onSwitchToSignup}
-                  className="text-blue-600 hover:underline"
-                >
-                  Sign up
-                </button>
-              </div>
-            </form>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+            <Button type="submit" className="w-full">
+              Log In
+            </Button>
+
+            <div className="text-center text-sm">
+              <span className="text-gray-600">Don't have an account? </span>
+              <button
+                type="button"
+                onClick={onSwitchToSignup}
+                className="text-blue-600 hover:underline"
+              >
+                Sign up
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

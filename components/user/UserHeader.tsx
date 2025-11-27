@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface HeaderProps {
-  onNavigate: (view: 'dashboard' | 'services' | 'facilities' |  'application' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'services' | 'facilities' | 'application' | 'requests') => void;
 }
 
 export function Header({ onNavigate }: HeaderProps) {
@@ -28,97 +28,89 @@ export function Header({ onNavigate }: HeaderProps) {
   const router = useRouter()
   const [loginOpen, setLoginOpen] = useState(false)
   const [signupOpen, setSignupOpen] = useState(false)
+  const [logoutLoading, setLogoutLoading] = useState(false)
 
   const handleSignOut = async () => {
     try {
+      setLogoutLoading(true) // SHOW LOADING OVERLAY
       await axiosInstance.post('/auth/logout')
-      router.refresh()
+
+      setTimeout(() => {
+        window.location.reload() // HARD RELOAD
+      }, 1200)
+      
     } catch (error) {
       console.error('Failed to log out:', error)
+      setLogoutLoading(false)
     }
   }
 
   return (
     <>
-    <div className="max-w-4xl mx-auto px-6">
-      <div className="flex items-center justify-between rounded-full bg-white px-6 py-3 shadow-sm">
-        
-        {/* Logo + Title */}
-        <div 
-          className="flex items-center space-x-3 cursor-pointer" 
-          onClick={() => onNavigate('dashboard')}
-        >
-          <Landmark className="h-8 w-8 text-blue-800" /> 
-          <h1 className="text-xl font-semibold text-gray-900">E-Barangay</h1>
+      {/* 🔵 LOGOUT LOADING OVERLAY */}
+      {logoutLoading && (
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-[9999] animate-fadeIn">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-lg font-medium text-gray-700">Logging out...</p>
+          <p className="text-sm text-gray-500">Please wait.</p>
         </div>
+      )}
 
-        {/* Center Navigation */}
-        <nav className="flex items-center space-x-8 text-sm font-medium text-gray-700">
-          <button 
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="flex items-center justify-between rounded-full bg-white px-6 py-3 shadow-sm">
+          
+          {/* Logo + Title */}
+          <div 
+            className="flex items-center space-x-3 cursor-pointer" 
             onClick={() => onNavigate('dashboard')}
-            className="hover:text-blue-600"
           >
-            Home
-          </button>
-          <button 
-            onClick={() => onNavigate('services')}
-            className="hover:text-blue-600"
-          >
-            Services
-          </button>
-          <button 
-            onClick={() => onNavigate('facilities')}
-            className="hover:text-blue-600"
-          >
-            Facilities
-          </button>
-        </nav>
+            <Landmark className="h-8 w-8 text-blue-800" /> 
+            <h1 className="text-xl font-semibold text-gray-900">E-Barangay</h1>
+          </div>
 
-        {/* Right Side Buttons */}
-        <div className="flex items-center space-x-3">
-            {loading ? (
-              <Button variant="outline" disabled>Loading...</Button>
-            ) : user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="outline"> 
-                    <User className="h-4 w-4 mr-2" />
-                    {user.email?.split('@')[0] || 'Account'}
-              </Button>
-            </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => onNavigate('requests')}>
-                      View All Requests
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
+          {/* Center Navigation */}
+          <nav className="flex items-center space-x-8 text-sm font-medium text-gray-700">
+            <button onClick={() => onNavigate('dashboard')} className="hover:text-blue-600">Home</button>
+            <button onClick={() => onNavigate('services')} className="hover:text-blue-600">Services</button>
+            <button onClick={() => onNavigate('facilities')} className="hover:text-blue-600">Facilities</button>
+          </nav>
+
+          {/* Right Side Buttons */}
+          <div className="flex items-center space-x-3">
+              {loading ? (
+                <Button variant="outline" disabled>Loading...</Button>
+              ) : user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button variant="outline"> 
+                      <User className="h-4 w-4 mr-2" />
+                      {user.email?.split('@')[0] || 'Account'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      Log Out
-                    </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-            ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setLoginOpen(true)}
-                >
-                  Log In
-                </Button>
-                <Button 
-                  onClick={() => setSignupOpen(true)}
-                >
-                  Sign Up
-                </Button>
-              </>
-            )}
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => onNavigate('requests')}>
+                        View All Requests
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>Settings</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        Log Out
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={() => setLoginOpen(true)}>Log In</Button>
+                  <Button onClick={() => setSignupOpen(true)}>Sign Up</Button>
+                </>
+              )}
+          </div>
         </div>
       </div>
-    </div>
 
       <LoginForm 
         open={loginOpen} 
