@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,16 +8,22 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+        
 
 model User {
   id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   username        String          @unique
   password        String
   email           String          @unique
+  userRole        user_role       @default(resident) @map("role")
+
+  // ⭐ NEW FIELD — correctly mapped to Supabase enum "barangay"
+  barangay        barangay
+
+
   createdAt       DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime?       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  userRole        user_role       @default(resident) @map("role")
-  barangay        Barangay?
+
   request_actions RequestAction[]
   requests        Request[]
   statistics      Statistics[]
@@ -46,7 +53,6 @@ model Item {
   bookingRules String?      @map("booking_rules")
   createdAt    DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime?    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  payment      Int?
   category     Category?    @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
   requests     Request[]
   statistics   Statistics[]
@@ -122,9 +128,10 @@ enum user_role {
   staff
 }
 
-enum Barangay {
-  Molino_I   @map("Molino I")
-  Molino_II  @map("Molino II")
-  Molino_III @map("Molino III")
-  Molino_IV  @map("Molino IV")
+enum barangay {
+  Molino_I
+  Molino_II
+  Molino_III
+  Molino_IV
 }
+
