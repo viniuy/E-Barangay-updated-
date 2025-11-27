@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dialog'
 import { signIn } from '@/app/actions/auth'
 import { toast } from 'sonner'
-
 interface LoginFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void

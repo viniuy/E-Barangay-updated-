@@ -1,27 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getSession } from '@/lib/auth/session'
+import { randomUUID } from 'crypto'
+import { Barangay } from '@prisma/client'
+import bcrypt from 'bcryptjs'
+
+// Frontend → Prisma enum mapping
+const barangayMap = {
+  "Molino I": "Molino_I",
+  "Molino II": "Molino_II",
+  "Molino III": "Molino_III",
+  "Molino IV": "Molino_IV",
+} as const
+
+type BarangayKey = keyof typeof barangayMap // "Molino I" | "Molino II" | "Molino III" | "Molino IV"
+
+// Helper to map frontend string to Prisma enum
+const prismaBarangay = (barangay: BarangayKey) => barangayMap[barangay]
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, username, password, authUserId } = body
+    const { email, username, password, authUserId, barangay } = body
 
-    if (!email || !username) {
+    if (!email || !username || !barangay) {
       return NextResponse.json(
-        { error: 'Email and username are required' },
+        { error: 'Email, username, and barangay are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!Object.keys(barangayMap).includes(barangay)) {
+      return NextResponse.json(
+        { error: `Invalid barangay: ${barangay}` },
         { status: 400 }
       )
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          { username },
-        ],
-      },
+      where: { OR: [{ email }, { username }] },
     })
 
     if (existingUser) {
@@ -31,15 +49,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Hash password (replace placeholder with proper hash in production)
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : 'hashed_password_placeholder'
+
     // Create user in database
-    // Note: We use authUserId if provided (from Supabase Auth), otherwise generate a new UUID
     const newUser = await prisma.user.create({
       data: {
-        id: authUserId || undefined, // Use auth user ID if provided
+        id: authUserId || randomUUID(),
         email,
         username,
-        password: password || 'hashed_password_placeholder', // In production, this should be properly hashed
-        userRole: 'resident', // Default role is resident
+        password: hashedPassword,
+        userRole: 'resident',
+        barangay: prismaBarangay(barangay as BarangayKey) as Barangay,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -62,52 +83,21 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email')
     const username = searchParams.get('username')
 
+    let user
+
     if (id) {
-      const user = await prisma.user.findUnique({
-        where: { id },
-      })
+      user = await prisma.user.findUnique({ where: { id } })
+    } else if (email) {
+      user = await prisma.user.findUnique({ where: { email } })
+    } else if (username) {
+      user = await prisma.user.findUnique({ where: { username } })
+    } else {
+      // Get current authenticated user from session
+      const session = await getSession()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-      if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 })
-      }
-
-      return NextResponse.json(user)
+      user = await prisma.user.findUnique({ where: { id: session.user.id } })
     }
-
-    if (email) {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      })
-
-      if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 })
-      }
-
-      return NextResponse.json(user)
-    }
-
-    if (username) {
-      const user = await prisma.user.findUnique({
-        where: { username },
-      })
-
-      if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 })
-      }
-
-      return NextResponse.json(user)
-    }
-
-    // Get current authenticated user from session
-    const session = await getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -122,4 +112,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
