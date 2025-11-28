@@ -64,3 +64,75 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/items — Create new item
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json()
+
+    const item = await prisma.item.create({
+      data,
+    })
+
+    return NextResponse.json(item, { status: 201 })
+  } catch (error) {
+    console.error("POST error:", error)
+    return NextResponse.json({ error: "Failed to create item" }, { status: 500 })
+  }
+}
+
+
+/**
+ * PATCH /api/items — Update item
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, ...data } = body
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Missing item ID' },
+        { status: 400 }
+      )
+    }
+
+    const updatedItem = await prisma.item.update({
+      where: { id },
+      data,
+    })
+
+    return NextResponse.json(updatedItem)
+  } catch (error) {
+    console.error('Error updating item:', error)
+    return NextResponse.json(
+      { error: 'Failed to update item' },
+      { status: 500 }
+    )
+  }
+}
+
+
+/**
+ * DELETE /api/items?id=xxx
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const id = request.nextUrl.searchParams.get("id")
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing item ID" }, { status: 400 })
+    }
+
+    await prisma.item.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("DELETE error:", error)
+    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 })
+  }
+}
+
