@@ -7,7 +7,6 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SignupForm } from '@/components/auth/SignupForm'
 import axiosInstance from '@/lib/axios'
-import { useRouter } from 'next/navigation'
 
 import {
   DropdownMenu,

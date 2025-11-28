@@ -4,101 +4,36 @@ import { Header } from './AdminHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import Footer from "../Footer";
-import { useCategories, useItems } from '@/lib/hooks/useItems';
 import { getStatistics } from '@/lib/api/statistics';
 import { useEffect, useState } from 'react';
-
-import { 
-  Plane, 
-  GraduationCap, 
-  Heart, 
-  Building, 
-  Car,
-  Users,
-  Shield,
-  ArrowRight,
-  TrendingUp,
-  Star,
-  Volleyball,
-  ShoppingBasket,
-  Landmark,
-  Warehouse,
-  FileCheck2
-} from 'lucide-react';
+import { getAllRequests } from '@/lib/api/requests'
+import { TrendingUp } from 'lucide-react';
+import Footer from "../Footer";
 
 interface MainDashboardProps {
   onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
-  onSelectService?: (service: string) => void;
 }
 
-// Icon mapping for categories
-const categoryIconMap: Record<string, any> = {
-  'education': GraduationCap,
-  'travel': Plane,
-  'health': Heart,
-  'business': Building,
-  'transport': Car,
-  'social': Users,
-  'security': Shield,
-  'default': FileCheck2,
-}
-
-// Color mapping
-const colorClasses = [
-  'bg-purple-100 text-purple-600',
-  'bg-green-100 text-green-600',
-  'bg-red-100 text-red-600',
-  'bg-orange-100 text-orange-600',
-  'bg-indigo-100 text-indigo-600',
-  'bg-pink-100 text-pink-600',
-  'bg-gray-100 text-gray-600',
-  'bg-blue-100 text-blue-800',
-]
-
-export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProps) {
-  const { categories, loading: categoriesLoading } = useCategories()
-  const { items: services } = useItems('service')
+export function MainDashboard({ onNavigate }: MainDashboardProps) {
   const [stats, setStats] = useState<any>(null)
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const statistics = await getStatistics()
-        setStats(statistics)
-      } catch (error) {
-        console.error('Failed to load statistics:', error)
-      }
-    }
-    loadStats()
-  }, [])
+useEffect(() => {
+  async function loadStats() {
+    try {
+      const statistics = await getStatistics()
+      setStats(statistics)
 
-  // Filter categories for services and facilities
-  const serviceCategories = categories
-    .filter(cat => services.some(s => {
-      const categoryId = (s as any).categoryId || (s as any).category_id
-      return categoryId === cat.id
-    }))
-    .map((cat, index) => {
-      const count = services.filter(s => {
-        const categoryId = (s as any).categoryId || (s as any).category_id
-        return categoryId === cat.id
-      }).length
-      const nameLower = cat.name?.toLowerCase() || ''
-      const iconKey = Object.keys(categoryIconMap).find(key => nameLower.includes(key)) || 'default'
-      const IconComponent = categoryIconMap[iconKey]
-      const color = colorClasses[index % colorClasses.length]
-      
-      return {
-        id: cat.id,
-        title: cat.name || 'Category',
-        description: cat.description || '',
-        icon: IconComponent,
-        count,
-        color,
-        popular: count >= 3
-      }
-    })
+      // Load only first 3 requests
+      const all = await getAllRequests()
+      setRecentRequests(all.slice(0, 3))
+    } catch (error) {
+      console.error('Failed to load statistics:', error)
+    }
+  }
+  loadStats()
+}, [])
+
+const [recentRequests, setRecentRequests] = useState<Array<any>>([])
 
   return (
     <div>
@@ -121,7 +56,7 @@ export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProp
             <div className="mt-6 flex justify-center gap-4">
               <button
                 onClick={() =>
-                  document.getElementById("permits")?.scrollIntoView({ behavior: "smooth" })
+                  document.getElementById("requests")?.scrollIntoView({ behavior: "smooth" })
                 }
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
               >
@@ -130,52 +65,71 @@ export function MainDashboard({ onNavigate, onSelectService }: MainDashboardProp
             </div>
           </div>
 
-          <div id="permits" className="grid lg:grid-cols-3 gap-8">
+          <div id="requests" className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
               {/* Service Categories */}
-              <div className="mb-8 bg-blue-200 p-6 rounded-lg">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl">Permits & Licenses</h2>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => onNavigate('directory')}
+              {/* Recent Requests Section (Card Based) */}
+              <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-semibold">Recent Requests</h2>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => onNavigate('requests')}
                   >
                     View All
-                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  {serviceCategories.map((category) => {
-                    const IconComponent = category.icon;
-                    return (
-                      <Card 
-                        key={category.id} 
-                        className="hover:shadow-lg transition-shadow cursor-pointer relative"
-                        onClick={() => onNavigate('directory')}
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className={`p-3 rounded-lg ${category.color}`}>
-                              <IconComponent className="h-6 w-6" />
-                            </div>
-                            <div className="flex flex-col items-end space-y-1">
-                              <Badge variant="secondary">{category.count} services</Badge>
-                              {category.popular && (
-                                <Badge className="bg-yellow-100 text-yellow-800">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  Popular
-                                </Badge>
-                              )}
-                            </div>
+
+                {/* Scrollable Cards */}
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                  {recentRequests.length === 0 && (
+                    <Card className="p-4 text-center text-gray-500">
+                      No recent requests
+                    </Card>
+                  )}
+
+                  {recentRequests.map((req) => (
+                    <Card
+                      key={req.id}
+                      className="cursor-pointer hover:shadow-lg transition"
+                      onClick={() => onNavigate('requests')}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-base">
+                              {req.item?.name || 'Unknown Service'}
+                            </CardTitle>
+                            <CardDescription className="text-sm">
+                              {req.user?.username || req.user?.email}
+                            </CardDescription>
                           </div>
-                          <CardTitle className="text-lg">{category.title}</CardTitle>
-                          <CardDescription>{category.description}</CardDescription>
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
+
+                          {/* Status Badge */}
+                          <Badge
+                            variant="outline"
+                            className={
+                              req.status === 'pending'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : req.status === 'approved'
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-red-50 text-red-700 border-red-200'
+                            }
+                          >
+                            {req.status}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="pt-0 pb-3">
+                        <p className="text-xs text-muted-foreground">
+                          Submitted: {new Date(req.submittedAt).toLocaleDateString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
             </div>

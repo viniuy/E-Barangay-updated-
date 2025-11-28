@@ -97,6 +97,5 @@ export function Header({ onNavigate }: HeaderProps) {
         </div>
       </div>
     </div>
-
   );
 }

@@ -89,6 +89,7 @@ export interface Database {
           image_url: string | null
           availability: string | null
           booking_rules: string | null
+          payment: number | null        // ✅ added
           created_at: string
           updated_at: string
         }
@@ -102,6 +103,7 @@ export interface Database {
           image_url?: string | null
           availability?: string | null
           booking_rules?: string | null
+          payment?: number | null       // ✅ added
           created_at?: string
           updated_at?: string
         }
@@ -115,6 +117,7 @@ export interface Database {
           image_url?: string | null
           availability?: string | null
           booking_rules?: string | null
+          payment?: number | null       // ✅ added
           created_at?: string
           updated_at?: string
         }
@@ -242,4 +245,3 @@ export type RequestWithDetails = Request & {
   item: ItemWithCategory | null
   actions: RequestAction[]
 }
-

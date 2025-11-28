@@ -256,7 +256,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
             {/* Left Side - Title + Description + Buttons */}
             <div>
               <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                Barangay Digital Portal.
+                Welcome to E-Barangay.
               </h1>
               <p className="mt-4 text-lg text-gray-600">
                 Request, apply, and schedule online - pick up when ready.
