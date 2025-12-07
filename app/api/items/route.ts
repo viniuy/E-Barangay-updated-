@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const id = searchParams.get('id')
-    const type = searchParams.get('type') // This is actually processing time, not service/facility
-    const categoryId = searchParams.get('categoryId')
-    const search = searchParams.get('search')
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get('id');
+    const type = searchParams.get('type'); // This is actually processing time, not service/facility
+    const categoryId = searchParams.get('categoryId');
+    const search = searchParams.get('search');
 
     if (id) {
       const item = await prisma.item.findUnique({
@@ -15,18 +15,18 @@ export async function GET(request: NextRequest) {
         include: {
           category: true,
         },
-      })
+      });
 
       if (!item) {
-        return NextResponse.json({ error: 'Item not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Item not found' }, { status: 404 });
       }
 
-      return NextResponse.json(item)
+      return NextResponse.json(item);
     }
 
     let where: any = {
       status: 'available', // Filter by available status
-    }
+    };
 
     // Note: 'type' in your database stores processing time (e.g., '1-2 days'), not 'service'/'facility'
     // So we ignore the type parameter for service/facility distinction
@@ -36,14 +36,14 @@ export async function GET(request: NextRequest) {
     // }
 
     if (categoryId) {
-      where.categoryId = categoryId
+      where.categoryId = categoryId;
     }
 
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-      ]
+      ];
     }
 
     const items = await prisma.item.findMany({
@@ -52,15 +52,15 @@ export async function GET(request: NextRequest) {
         category: true,
       },
       orderBy: { name: 'asc' },
-    })
+    });
 
-    return NextResponse.json(items)
+    return NextResponse.json(items);
   } catch (error) {
-    console.error('Error fetching items:', error)
+    console.error('Error fetching items:', error);
     return NextResponse.json(
       { error: 'Failed to fetch items' },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
@@ -69,70 +69,92 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json()
+    const data = await request.json();
 
     const item = await prisma.item.create({
       data,
-    })
+    });
 
-    return NextResponse.json(item, { status: 201 })
+    return NextResponse.json(item, { status: 201 });
   } catch (error) {
-    console.error("POST error:", error)
-    return NextResponse.json({ error: "Failed to create item" }, { status: 500 })
+    console.error('POST error:', error);
+    return NextResponse.json(
+      { error: 'Failed to create item' },
+      { status: 500 },
+    );
   }
 }
-
 
 /**
  * PATCH /api/items — Update item
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { id, ...data } = body
+    const body = await request.json();
+    const { id, category_id, booking_rules, image_url, payment, ...data } =
+      body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Missing item ID' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing item ID' }, { status: 400 });
     }
+
+    // Transform snake_case fields to camelCase for Prisma
+    const updateData: any = { ...data };
+
+    if (booking_rules !== undefined) {
+      updateData.bookingRules = booking_rules;
+    }
+
+    if (image_url !== undefined) {
+      updateData.imageUrl = image_url;
+    }
+
+    if (category_id !== undefined) {
+      if (category_id === null) {
+        updateData.category = { disconnect: true };
+      } else {
+        updateData.category = { connect: { id: category_id } };
+      }
+    }
+
+    // Note: 'payment' field is ignored as it doesn't exist in the Prisma schema
 
     const updatedItem = await prisma.item.update({
       where: { id },
-      data,
-    })
+      data: updateData,
+    });
 
-    return NextResponse.json(updatedItem)
+    return NextResponse.json(updatedItem);
   } catch (error) {
-    console.error('Error updating item:', error)
+    console.error('Error updating item:', error);
     return NextResponse.json(
       { error: 'Failed to update item' },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
-
 
 /**
  * DELETE /api/items?id=xxx
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const id = request.nextUrl.searchParams.get("id")
+    const id = request.nextUrl.searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: "Missing item ID" }, { status: 400 })
+      return NextResponse.json({ error: 'Missing item ID' }, { status: 400 });
     }
 
     await prisma.item.delete({
       where: { id },
-    })
+    });
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE error:", error)
-    return NextResponse.json({ error: "Failed to delete item" }, { status: 500 })
+    console.error('DELETE error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete item' },
+      { status: 500 },
+    );
   }
 }
-
