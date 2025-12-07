@@ -214,15 +214,103 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
   // Submit edit
   const handleSaveEdit = async () => {
     if (!selectedItem) return;
+
+    // Validate required fields
+    if (!form.name || form.name.trim() === '') {
+      toast.error('Item name is required');
+      return;
+    }
+
+    if (form.name.length < 3) {
+      toast.error('Item name must be at least 3 characters long');
+      return;
+    }
+
+    if (form.name.length > 200) {
+      toast.error('Item name must not exceed 200 characters');
+      return;
+    }
+
+    if (!form.description || form.description.trim() === '') {
+      toast.error('Description is required');
+      return;
+    }
+
+    if (form.description.length < 10) {
+      toast.error('Description must be at least 10 characters long');
+      return;
+    }
+
+    if (form.description.length > 1000) {
+      toast.error('Description must not exceed 1000 characters');
+      return;
+    }
+
+    if (!form.category_id) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    if (!form.type || form.type.trim() === '') {
+      toast.error('Processing time is required');
+      return;
+    }
+
+    const validProcessingTimes = [
+      'Same Day',
+      '1 Day',
+      '2 Days',
+      '3 Days',
+      '4 Days',
+      '5 Days',
+      '1 Week',
+      '2 Weeks',
+      '3 Weeks',
+      '1 Month',
+    ];
+    if (!validProcessingTimes.includes(form.type)) {
+      toast.error('Please select a valid processing time');
+      return;
+    }
+
+    if (!form.availability || form.availability.trim() === '') {
+      toast.error('Availability is required');
+      return;
+    }
+
+    const validAvailability = [
+      'Business Hours',
+      '24/7',
+      'Weekdays',
+      'Weekends',
+      'Holidays',
+      'By Appointment',
+      'Not Available',
+    ];
+    if (!validAvailability.includes(form.availability)) {
+      toast.error('Please select a valid availability option');
+      return;
+    }
+
+    if (form.booking_rules && form.booking_rules.length > 500) {
+      toast.error('Booking rules must not exceed 500 characters');
+      return;
+    }
+
+    if (!form.status) {
+      toast.error('Status is required');
+      return;
+    }
+
     setProcessing(true);
     try {
       const payload: any = {
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
         category_id: form.category_id,
-        type: form.type,
-        availability: form.availability,
-        booking_rules: form.booking_rules,
+        type: form.type.trim(),
+        availability: form.availability.trim(),
+        booking_rules: form.booking_rules?.trim() || '',
         status: form.status,
       };
 
@@ -256,7 +344,7 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
       }
 
       await updateItem(selectedItem.id, payload);
-      toast.success('Item updated');
+      toast.success('Item updated successfully');
       setIsEditOpen(false);
       await loadItems();
     } catch (err) {
@@ -269,25 +357,119 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
 
   // Submit add
   const handleCreate = async () => {
+    // Validate required fields
+    if (!form.name || form.name.trim() === '') {
+      toast.error('Item name is required');
+      return;
+    }
+
+    if (form.name.length < 3) {
+      toast.error('Item name must be at least 3 characters long');
+      return;
+    }
+
+    if (form.name.length > 200) {
+      toast.error('Item name must not exceed 200 characters');
+      return;
+    }
+
+    if (!form.description || form.description.trim() === '') {
+      toast.error('Description is required');
+      return;
+    }
+
+    if (form.description.length < 10) {
+      toast.error('Description must be at least 10 characters long');
+      return;
+    }
+
+    if (form.description.length > 1000) {
+      toast.error('Description must not exceed 1000 characters');
+      return;
+    }
+
+    if (!form.category_id) {
+      toast.error('Please select a category');
+      return;
+    }
+
+    if (!form.type || form.type.trim() === '') {
+      toast.error('Processing time is required');
+      return;
+    }
+
+    const validProcessingTimes = [
+      'Same Day',
+      '1 Day',
+      '2 Days',
+      '3 Days',
+      '4 Days',
+      '5 Days',
+      '1 Week',
+      '2 Weeks',
+      '3 Weeks',
+      '1 Month',
+    ];
+    if (!validProcessingTimes.includes(form.type)) {
+      toast.error('Please select a valid processing time');
+      return;
+    }
+
+    if (!form.availability || form.availability.trim() === '') {
+      toast.error('Availability is required');
+      return;
+    }
+
+    const validAvailability = [
+      'Business Hours',
+      '24/7',
+      'Weekdays',
+      'Weekends',
+      'Holidays',
+      'By Appointment',
+      'Not Available',
+    ];
+    if (!validAvailability.includes(form.availability)) {
+      toast.error('Please select a valid availability option');
+      return;
+    }
+
+    if (form.booking_rules && form.booking_rules.length > 500) {
+      toast.error('Booking rules must not exceed 500 characters');
+      return;
+    }
+
+    if (!form.status) {
+      toast.error('Status is required');
+      return;
+    }
+
+    // Validate facility-specific requirements
+    const categoryObj = categories?.find((c) => c.id === form.category_id);
+    const categoryName = categoryObj?.name?.toLowerCase() || '';
+    const isFacility =
+      categoryName === 'facility' ||
+      form.category_id === 'facility' ||
+      form.category_id === 'Facility';
+
+    if (isFacility && !imageFile && !form.image_url) {
+      toast.error('An image is required for facilities');
+      return;
+    }
+
     setProcessing(true);
     try {
       const payload: any = {
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
         category_id: form.category_id,
-        type: form.type,
-        availability: form.availability,
-        booking_rules: form.booking_rules,
+        type: form.type.trim(),
+        availability: form.availability.trim(),
+        booking_rules: form.booking_rules?.trim() || '',
         status: form.status,
       };
 
-      const categoryObj = categories?.find((c) => c.id === form.category_id);
-      const categoryName = categoryObj?.name?.toLowerCase() || '';
-      if (
-        categoryName === 'facility' ||
-        form.category_id === 'facility' ||
-        form.category_id === 'Facility'
-      ) {
+      if (isFacility) {
         if (imageFile) {
           // Upload image to Supabase storage
           const formData = new FormData();
@@ -304,12 +486,17 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
 
           const { url } = await uploadRes.json();
           payload.image_url = url;
+        } else if (form.image_url) {
+          payload.image_url = form.image_url;
         }
       }
 
       await createItem(payload);
-      toast.success('Item created');
+      toast.success('Item created successfully');
       setIsAddOpen(false);
+      setForm(defaultForm);
+      setImageFile(null);
+      setImagePreview(null);
       await loadItems();
     } catch (err) {
       console.error(err);
@@ -684,9 +871,9 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
                   <SelectValue placeholder='Select category' />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORY_LIST.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -695,20 +882,51 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
 
             <div className='grid grid-cols-2 gap-3'>
               <div>
-                <Label>Processing Time / Type</Label>
-                <Input
+                <Label>Processing Time</Label>
+                <Select
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                />
+                  onValueChange={(v) => setForm({ ...form, type: v })}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select processing time' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='Same Day'>Same Day</SelectItem>
+                    <SelectItem value='1 Day'>1 Day</SelectItem>
+                    <SelectItem value='2 Days'>2 Days</SelectItem>
+                    <SelectItem value='3 Days'>3 Days</SelectItem>
+                    <SelectItem value='4 Days'>4 Days</SelectItem>
+                    <SelectItem value='5 Days'>5 Days</SelectItem>
+                    <SelectItem value='1 Week'>1 Week</SelectItem>
+                    <SelectItem value='2 Weeks'>2 Weeks</SelectItem>
+                    <SelectItem value='3 Weeks'>3 Weeks</SelectItem>
+                    <SelectItem value='1 Month'>1 Month</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Availability</Label>
-                <Input
+                <Select
                   value={form.availability}
-                  onChange={(e) =>
-                    setForm({ ...form, availability: e.target.value })
-                  }
-                />
+                  onValueChange={(v) => setForm({ ...form, availability: v })}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select availability' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='Business Hours'>
+                      Business Hours
+                    </SelectItem>
+                    <SelectItem value='24/7'>24/7</SelectItem>
+                    <SelectItem value='Weekdays'>Weekdays</SelectItem>
+                    <SelectItem value='Weekends'>Weekends</SelectItem>
+                    <SelectItem value='Holidays'>Holidays</SelectItem>
+                    <SelectItem value='By Appointment'>
+                      By Appointment
+                    </SelectItem>
+                    <SelectItem value='Not Available'>Not Available</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -811,9 +1029,9 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
                   <SelectValue placeholder='Select category' />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORY_LIST.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -822,20 +1040,51 @@ export function AdminDirectory({ onNavigate }: AdminDirectoryProps) {
 
             <div className='grid grid-cols-2 gap-3'>
               <div>
-                <Label>Processing Time / Type</Label>
-                <Input
+                <Label>Processing Time</Label>
+                <Select
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                />
+                  onValueChange={(v) => setForm({ ...form, type: v })}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select processing time' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='Same Day'>Same Day</SelectItem>
+                    <SelectItem value='1 Day'>1 Day</SelectItem>
+                    <SelectItem value='2 Days'>2 Days</SelectItem>
+                    <SelectItem value='3 Days'>3 Days</SelectItem>
+                    <SelectItem value='4 Days'>4 Days</SelectItem>
+                    <SelectItem value='5 Days'>5 Days</SelectItem>
+                    <SelectItem value='1 Week'>1 Week</SelectItem>
+                    <SelectItem value='2 Weeks'>2 Weeks</SelectItem>
+                    <SelectItem value='3 Weeks'>3 Weeks</SelectItem>
+                    <SelectItem value='1 Month'>1 Month</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Availability</Label>
-                <Input
+                <Select
                   value={form.availability}
-                  onChange={(e) =>
-                    setForm({ ...form, availability: e.target.value })
-                  }
-                />
+                  onValueChange={(v) => setForm({ ...form, availability: v })}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select availability' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='Business Hours'>
+                      Business Hours
+                    </SelectItem>
+                    <SelectItem value='24/7'>24/7</SelectItem>
+                    <SelectItem value='Weekdays'>Weekdays</SelectItem>
+                    <SelectItem value='Weekends'>Weekends</SelectItem>
+                    <SelectItem value='Holidays'>Holidays</SelectItem>
+                    <SelectItem value='By Appointment'>
+                      By Appointment
+                    </SelectItem>
+                    <SelectItem value='Not Available'>Not Available</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

@@ -69,10 +69,32 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
+    const body = await request.json();
+    const { category_id, booking_rules, image_url, payment, ...data } = body;
+
+    // Transform snake_case fields to camelCase for Prisma
+    const createData: any = { ...data };
+
+    if (booking_rules !== undefined) {
+      createData.bookingRules = booking_rules;
+    }
+
+    if (image_url !== undefined) {
+      createData.imageUrl = image_url;
+    }
+
+    if (category_id !== undefined) {
+      if (category_id === null) {
+        // Don't connect to any category
+      } else {
+        createData.category = { connect: { id: category_id } };
+      }
+    }
+
+    // Note: 'payment' field is ignored as it doesn't exist in the Prisma schema
 
     const item = await prisma.item.create({
-      data,
+      data: createData,
     });
 
     return NextResponse.json(item, { status: 201 });
