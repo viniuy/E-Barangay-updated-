@@ -301,9 +301,8 @@ export function AdminRequestManagement({ onNavigate }: AdminRequestManagementPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Footer />
       </div>
+      <Footer />
     </div>
   )
 }
