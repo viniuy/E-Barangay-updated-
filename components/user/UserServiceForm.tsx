@@ -259,7 +259,7 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
               onClick={() => setShowPreview(false)}
               className="flex-1"
             >
-              ← Back to Edit
+               Back to Edit
             </Button>
             <Button
               type="button"
@@ -374,7 +374,7 @@ export function ServiceForm({ service, onNavigate }: ServiceFormProps) {
               className="flex-1"
               disabled={submitting}
             >
-              ← Back
+              Back
             </Button>
 
             <Button
