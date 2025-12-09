@@ -146,12 +146,8 @@ const [recentRequests, setRecentRequests] = useState<Array<any>>([])
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Total Services</span>
+                    <span className="text-sm">Total Services & Facilities </span>
                     <span className="font-semibold">{stats?.totalServices || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total Facilities</span>
-                    <span className="font-semibold">{stats?.totalFacilities || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Requests</span>
