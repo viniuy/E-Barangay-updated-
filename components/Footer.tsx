@@ -31,12 +31,6 @@ export default function Footer() {
               {/* Scrollable container */}
               <div className="relative overflow-y-auto p-6 space-y-6 text-center max-h-[75vh]">
 
-                {/* Fade Gradient TOP */}
-                <div className="pointer-events-none absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white to-transparent z-20" />
-
-                {/* Fade Gradient BOTTOM */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent z-20" />
-
                 {/* Header */}
                 <div className="space-y-2">
                   <h2 className="text-3xl font-semibold tracking-tight">About Us</h2>
