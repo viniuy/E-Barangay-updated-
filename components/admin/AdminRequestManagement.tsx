@@ -18,7 +18,7 @@ import {
 import { getAllRequests, updateRequestStatus } from '@/lib/api/requests'
 import { getCurrentUser } from '@/app/actions/auth'
 import { toast } from 'sonner'
-import { Clock, CheckCircle, XCircle, Eye, MessageSquare } from 'lucide-react'
+import { Clock, CheckCircle, XCircle} from 'lucide-react'
 import Footer from '../Footer'
 
 interface AdminRequestManagementProps {
@@ -115,6 +115,7 @@ export function AdminRequestManagement({ onNavigate }: AdminRequestManagementPro
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-200 p-6 rounded-lg m-5">
       <Header onNavigate={onNavigate} />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -302,6 +303,7 @@ export function AdminRequestManagement({ onNavigate }: AdminRequestManagementPro
       </Dialog>
 
       <Footer />
+      </div>
     </div>
   )
 }
