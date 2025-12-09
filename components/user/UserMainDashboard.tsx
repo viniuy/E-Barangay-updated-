@@ -441,18 +441,10 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center font-semibold">
                     <TrendingUp className="h-5 w-5 mr-2" />
-                    Service Statistics
+                    Your Request Statistics
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total Services</span>
-                    <span className="font-semibold">{stats.totalServices}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total Facilities</span>
-                    <span className="font-semibold">{stats.totalFacilities}</span>
-                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Requests</span>
                     <span className="font-semibold">{stats.totalRequests}</span>
@@ -500,20 +492,6 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => alert('Opening live chat...')}
-                  >
-                    💬 Live Chat
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start"
-                    onClick={() => alert('Downloading user guide...')}
-                  >
-                    📚 User Guide
-                  </Button>
                 </CardContent>
               </Card>
             </div>

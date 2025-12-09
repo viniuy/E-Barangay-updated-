@@ -92,7 +92,6 @@ export function Header({ onNavigate }: HeaderProps) {
                       <DropdownMenuItem onClick={() => onNavigate('requests')}>
                         View All Requests
                       </DropdownMenuItem>
-                      <DropdownMenuItem>Settings</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleSignOut}>
                         Log Out
