@@ -414,7 +414,7 @@ export function AdminRequestManagement({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      </div>
       <Footer />
     </div>
   );
