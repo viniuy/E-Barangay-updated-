@@ -18,7 +18,12 @@ const AdminDirectoryDynamic = dynamic(
   { ssr: false },
 );
 
-type View = 'dashboard' | 'directory' | 'requests';
+const AdminUsersPage = dynamic(
+  () => import('./users/page').then((mod) => mod.default),
+  { ssr: false },
+);
+
+type View = 'dashboard' | 'directory' | 'requests' | 'users';
 
 export default function AdminPage() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -84,6 +89,8 @@ export default function AdminPage() {
         return <AdminDirectoryDynamic onNavigate={setCurrentView} />;
       case 'requests':
         return <AdminRequestManagement onNavigate={setCurrentView} />;
+      case 'users':
+        return <AdminUsersPage />;
       default:
         return <MainDashboard onNavigate={setCurrentView} />;
     }

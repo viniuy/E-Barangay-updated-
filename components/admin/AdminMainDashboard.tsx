@@ -17,7 +17,7 @@ import { TrendingUp } from 'lucide-react';
 import Footer from '../Footer';
 
 interface MainDashboardProps {
-  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests' | 'users') => void;
 }
 
 export function MainDashboard({ onNavigate }: MainDashboardProps) {

@@ -4,7 +4,9 @@ export type UserRole = 'USER' | 'STAFF' | 'ADMIN' | 'SUPER_ADMIN';
 
 export const CANACCESS: Record<string, UserRole[]> = {
   '/user': ['USER'],
-  '/admin': ['ADMIN', 'SUPER_ADMIN'],
+  '/services': ['USER'],
+  '/facilities': ['USER'],
+  '/admin': ['ADMIN'],
   '/super-admin': ['SUPER_ADMIN'],
   '/user-landing': [], // Public
   '/': [], // Public (login/signup)

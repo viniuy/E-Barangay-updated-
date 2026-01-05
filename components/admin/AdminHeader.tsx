@@ -14,7 +14,7 @@ import {
 import { useState } from 'react';
 
 interface HeaderProps {
-  onNavigate: (view: 'dashboard' | 'directory' | 'requests') => void;
+  onNavigate: (view: 'dashboard' | 'directory' | 'requests' | 'users') => void;
 }
 
 export function Header({ onNavigate }: HeaderProps) {
@@ -70,10 +70,7 @@ export function Header({ onNavigate }: HeaderProps) {
             Requests
           </button>
           <button
-            onClick={() => {
-              // Use router to navigate to /admin/users
-              router.push('/admin/users');
-            }}
+            onClick={() => onNavigate('users')}
             className='hover:text-green-700 -pl-6 pr-6'
           >
             Verify Users
