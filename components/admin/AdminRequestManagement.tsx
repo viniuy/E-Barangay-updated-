@@ -206,7 +206,7 @@ export function AdminRequestManagement({
                           </CardTitle>
                           <CardDescription>
                             Requested by:{' '}
-                            {request.user?.username ||
+                            {request.user?.fullName ||
                               request.user?.email ||
                               'Unknown User'}
                           </CardDescription>
