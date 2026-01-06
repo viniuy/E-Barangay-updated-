@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { MainDashboard } from '@/components/admin/AdminMainDashboard';
 import { AdminDirectory } from '@/components/admin/AdminDirectory';
 import { AdminRequestManagement } from '@/components/admin/AdminRequestManagement';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { canAccessPage } from '@/lib/auth/canAccess';
+import { useRouterWithProgress } from '@/lib/hooks/useRouterWithProgress';
 
 // Dynamically import to avoid SSR issues
 const AdminDirectoryDynamic = dynamic(
@@ -31,7 +31,7 @@ export default function AdminPage() {
     import('@/lib/auth/canAccess').UserRole | null
   >(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const router = useRouterWithProgress();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {

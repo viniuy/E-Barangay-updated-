@@ -11,7 +11,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useRouterWithProgress } from '@/lib/hooks/useRouterWithProgress';
 import { getCurrentUser } from '@/app/actions/auth';
 import { Header } from '@/components/admin/AdminHeader';
 
@@ -33,7 +33,7 @@ export default function AdminVerifyUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
-  const router = useRouter();
+  const router = useRouterWithProgress();
 
   useEffect(() => {
     async function fetchUsers() {
