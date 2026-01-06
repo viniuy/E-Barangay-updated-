@@ -67,7 +67,7 @@ export function Header() {
           {/* Center Navigation */}
           <nav className='flex items-center space-x-8 text-sm font-medium text-gray-700'>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/user')}
               className='hover:text-blue-600'
             >
               Home

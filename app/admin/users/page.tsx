@@ -13,7 +13,7 @@ import {
 import { toast } from 'sonner';
 import { useRouterWithProgress } from '@/lib/hooks/useRouterWithProgress';
 import { getCurrentUser } from '@/app/actions/auth';
-import { Header } from '@/components/admin/AdminHeader';
+import { SharedHeader } from '@/components/SharedHeader';
 
 // User type for table
 interface User {
@@ -82,7 +82,9 @@ export default function AdminVerifyUsersPage() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex flex-col items-center py-10 px-4'>
-      <Header onNavigate={() => {}} />
+      <div className='w-full py-6'>
+        <SharedHeader />
+      </div>
       <div className='w-full'>
         <h1 className='text-2xl font-bold mb-6 text-center pt-6 pb-5'>
           Verify Users in Your Barangay

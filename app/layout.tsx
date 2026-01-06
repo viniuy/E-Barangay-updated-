@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import '@/styles/global.css';
 import { Toaster } from '@/components/ui/sonner';
 import { NProgressConfig } from '@/components/NProgressConfig';
+import PageTransition from '@/components/PageTransition';
 
 export const metadata: Metadata = {
   title: 'E-Barangay',
@@ -17,7 +18,7 @@ export default function RootLayout({
     <html lang='en'>
       <body className='min-h-screen bg-background'>
         <NProgressConfig />
-        {children}
+        <PageTransition>{children}</PageTransition>
         <Toaster />
       </body>
     </html>

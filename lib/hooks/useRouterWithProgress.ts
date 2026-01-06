@@ -1,19 +1,21 @@
 import { useRouter } from 'next/navigation';
 import NProgress from 'nprogress';
-import { useCallback } from 'react';
+import { useCallback, useTransition } from 'react';
 
 export function useRouterWithProgress() {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const push = useCallback(
     (href: string, options?: any) => {
       NProgress.start();
-      router.push(href, options);
-      // NProgress.done() will be called when the page finishes loading
-      // via a setTimeout to ensure the navigation has started
+      startTransition(() => {
+        router.push(href, options);
+      });
+      // NProgress.done() will be called when the transition completes
       setTimeout(() => {
         NProgress.done();
-      }, 500);
+      }, 100);
     },
     [router],
   );
@@ -21,36 +23,44 @@ export function useRouterWithProgress() {
   const replace = useCallback(
     (href: string, options?: any) => {
       NProgress.start();
-      router.replace(href, options);
+      startTransition(() => {
+        router.replace(href, options);
+      });
       setTimeout(() => {
         NProgress.done();
-      }, 500);
+      }, 100);
     },
     [router],
   );
 
   const back = useCallback(() => {
     NProgress.start();
-    router.back();
+    startTransition(() => {
+      router.back();
+    });
     setTimeout(() => {
       NProgress.done();
-    }, 500);
+    }, 100);
   }, [router]);
 
   const forward = useCallback(() => {
     NProgress.start();
-    router.forward();
+    startTransition(() => {
+      router.forward();
+    });
     setTimeout(() => {
       NProgress.done();
-    }, 500);
+    }, 100);
   }, [router]);
 
   const refresh = useCallback(() => {
     NProgress.start();
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
     setTimeout(() => {
       NProgress.done();
-    }, 500);
+    }, 100);
   }, [router]);
 
   return {
@@ -60,5 +70,6 @@ export function useRouterWithProgress() {
     forward,
     refresh,
     prefetch: router.prefetch,
+    isPending,
   };
 }
